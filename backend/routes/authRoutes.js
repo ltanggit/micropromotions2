@@ -15,8 +15,6 @@ function signToken(userId) {
 /** POST /api/auth/register */
 router.post('/register', async (req, res) => {
   try {
-    console.log('Incoming data:', req.body);
-
     const {
       email, password, roles = [],
       payer, worker,
@@ -31,6 +29,9 @@ router.post('/register', async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password required' });
     }
+    
+    console.log('Received email:', email); // <-- add this
+
 
     const exists = await User.findOne({ 'personal.email': email });
     if (exists) return res.status(400).json({ error: 'Email already in use' });

@@ -1,107 +1,45 @@
 // backend/routes/userRoutes.js
 import express from 'express';
-import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
+import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.post('/register', async (req, res) => {
-  try {
-    const {
-      email,
-      password,
-      roles = [],
-      payer,
-      worker,
+/** GET /api/users/me */
+router.get('/me', auth(true), async (req, res) => {
+  const user = await User.findById(req.user.id).select('-passwordHash');
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json(user);
+});
 
-      // Account fields
-      username,
-      status,
-      subscription,
-      isValid,
-      isActive,
-      region,
-      language,
-      affiliateId,
-      groups,
-      campaigns,
-      isEnrolled,
-      isMarketable,
+/** PATCH /api/users/me — Update logged-in user's info */
+router.patch('/me', auth(true), async (req, res) => {
+  const allowed = [
+    'account.username', 'personal.name', 'personal.bio',
+    'preferences.likes', 'preferences.dislikes',
+    'socials.website', 'socials.instagram'
+    // Add more fields as needed
+  ];
 
-      // Personal
-      name,
-      age,
-      bio,
+  const updates = req.body;
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
 
-      // Socials
-      website,
-      spotify,
-      instagram,
-      twitter,
-      tiktok,
-      youtube,
-
-      // Preferences
-      likes,
-      dislikes,
-
-      // Payment (optional)
-      paypalEmail,
-      stripeConnectId,
-      preferredMethod,
-    } = req.body;
-
-    // Check email uniqueness
-    const exists = await User.findOne({ 'personal.email': email });
-    if (exists) return res.status(400).json({ error: 'Email already in use' });
-
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      passwordHash,
-      roles,
-      payer,
-      worker,
-
-      account: {
-        username,
-        status: status ?? 'active',
-        subscription: subscription ?? 'free',
-        isValid: !!isValid,
-        isActive: isActive ?? true,
-        region,
-        language,
-        affiliateId,
-        groups,
-        campaigns,
-        isEnrolled: !!isEnrolled,
-        isMarketable: !!isMarketable,
-        // lastActiveAt / verifiedAt are set elsewhere (login/verify flows)
-      },
-
-      personal: {
-        email,
-        name,
-        age,
-        bio,
-      },
-
-      socials: { website, spotify, instagram, twitter, tiktok, youtube },
-      preferences: { likes, dislikes },
-      payment: { paypalEmail, stripeConnectId, preferredMethod },
-    });
-
-    res.status(201).json({
-      id: user._id,
-      email: user.personal.email,
-      roles: user.roles,
-      subscription: user.account?.subscription ?? 'free',
-      createdAt: user.createdAt,
-    });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: e.message });
+  for (const key in updates) {
+    if (!allowed.includes(key)) continue;
+    const [section, field] = key.split('.');
+    user[section][field] = updates[key];
   }
+
+  await user.save();
+  res.json({ success: true, user });
+});
+
+/** GET /api/users/:id — Get any user's public profile */
+router.get('/:id', async (req, res) => {
+  const user = await User.findById(req.params.id).select('account.username personal.bio socials');
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json(user);
 });
 
 export default router;

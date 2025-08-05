@@ -1,3 +1,4 @@
+// backend/routes/jobRoutes.js
 import express from 'express';
 import mongoose from 'mongoose';
 import Job from '../models/Job.js';
@@ -7,7 +8,9 @@ import { requireRole } from '../middleware/roles.js';
 
 const router = express.Router();
 
-/** Create job (payer) */
+/* -----------------------------------------------------------
+   Create job (payer only)
+----------------------------------------------------------- */
 router.post('/', auth(true), requireRole('payer'), async (req, res) => {
   try {
     const {
@@ -16,6 +19,10 @@ router.post('/', auth(true), requireRole('payer'), async (req, res) => {
       isBetaFree = false, expireAt
     } = req.body;
 
+    if (!title || !link || !maxListeners) {
+      return res.status(400).json({ error: 'title, link, and maxListeners are required' });
+    }
+
     const job = await Job.create({
       payerId: new mongoose.Types.ObjectId(req.user.id),
       title, link, description, tags,
@@ -23,56 +30,93 @@ router.post('/', auth(true), requireRole('payer'), async (req, res) => {
       isBetaFree, expireAt
     });
 
-    res.status(201).json(job);
+    return res.status(201).json(job);
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    return res.status(400).json({ error: e.message });
   }
 });
 
-/** List jobs (worker dashboard) with filters & pagination */
+/* -----------------------------------------------------------
+   List jobs (public/worker) with filters & pagination
+----------------------------------------------------------- */
 router.get('/', auth(false), async (req, res) => {
-  const {
-    status = 'open', tag, q,
-    page = 1, limit = 20,
-    sort = 'publishedAt', dir = 'desc'
-  } = req.query;
+  try {
+    const {
+      status = 'open', tag, q,
+      page = 1, limit = 20,
+      sort = 'publishedAt', dir = 'desc'
+    } = req.query;
 
-  const query = {};
-  if (status) query.status = status;
-  if (tag) query.tags = tag;
-  if (q) { // basic text search over title/description
-    query.$or = [
-      { title:       { $regex: q, $options: 'i' } },
-      { description: { $regex: q, $options: 'i' } },
-      { tags:        { $regex: q, $options: 'i' } },
-    ];
+    const query = {};
+    if (status) query.status = status;
+    if (tag) query.tags = tag;
+    if (q) {
+      query.$or = [
+        { title:       { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } },
+        { tags:        { $regex: q, $options: 'i' } },
+      ];
+    }
+
+    const lim = Math.min(Number(limit) || 20, 100);
+    const skip = (Math.max(Number(page) || 1, 1) - 1) * lim;
+    const sortObj = { [sort]: dir === 'asc' ? 1 : -1 };
+
+    const [items, total] = await Promise.all([
+      Job.find(query).sort(sortObj).skip(skip).limit(lim),
+      Job.countDocuments(query),
+    ]);
+
+    return res.json({
+      items,
+      total,
+      page: Number(page) || 1,
+      pages: Math.ceil(total / lim),
+      limit: lim
+    });
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
   }
-
-  const skip = (Math.max(+page,1)-1) * Math.min(+limit,100);
-  const sortObj = { [sort]: dir === 'asc' ? 1 : -1 };
-
-  const [items, total] = await Promise.all([
-    Job.find(query).sort(sortObj).skip(skip).limit(Math.min(+limit,100)),
-    Job.countDocuments(query)
-  ]);
-
-  res.json({
-    items,
-    page: +page,
-    limit: Math.min(+limit,100),
-    total,
-    pages: Math.ceil(total / Math.min(+limit,100))
-  });
 });
 
-/** Get job by id */
+/* -----------------------------------------------------------
+   🟡 Place “mine/*” routes BEFORE “/:jobId” to avoid conflicts
+----------------------------------------------------------- */
+
+/** Worker — jobs I’ve accepted (active only) */
+router.get('/mine/accepted', auth(true), requireRole('worker'), async (req, res) => {
+  const items = await Job.find({
+    assignments: {
+      $elemMatch: { workerId: new mongoose.Types.ObjectId(req.user.id), status: 'accepted' }
+    }
+  })
+  .sort({ publishedAt: -1 })
+  .limit(50);
+
+  return res.json(items);
+});
+
+/** Payer — jobs I posted */
+router.get('/mine/posted', auth(true), requireRole('payer'), async (req, res) => {
+  const items = await Job.find({ payerId: req.user.id })
+    .sort({ createdAt: -1 })
+    .limit(100);
+
+  return res.json(items);
+});
+
+/* -----------------------------------------------------------
+   Get job by id (public)
+----------------------------------------------------------- */
 router.get('/:jobId', auth(false), async (req, res) => {
   const job = await Job.findById(req.params.jobId);
   if (!job) return res.status(404).json({ error: 'Not found' });
-  res.json(job);
+  return res.json(job);
 });
 
-/** Worker accepts a job */
+/* -----------------------------------------------------------
+   Worker accepts a job
+----------------------------------------------------------- */
 router.post('/:jobId/accept', auth(true), requireRole('worker'), async (req, res) => {
   try {
     const { jobId } = req.params;
@@ -82,12 +126,14 @@ router.post('/:jobId/accept', auth(true), requireRole('worker'), async (req, res
     const job = await Job.findById(jobId);
     if (!job) return res.status(404).json({ error: 'Job not found' });
 
-    if (!['open','full'].includes(job.status)) {
+    if (!['open', 'full'].includes(job.status)) {
       return res.status(400).json({ error: 'Job not accepting assignments' });
     }
 
     // already accepted?
-    const exists = job.assignments.find(a => a.workerId?.toString() === workerId && a.status === 'accepted');
+    const exists = job.assignments.find(
+      a => a.workerId?.toString() === workerId && a.status === 'accepted'
+    );
     if (exists) return res.status(400).json({ error: 'Already accepted' });
 
     // capacity check
@@ -104,22 +150,15 @@ router.post('/:jobId/accept', auth(true), requireRole('worker'), async (req, res
     if (newActive >= job.maxListeners) job.status = 'full';
 
     await job.save();
-    res.json(job);
+    return res.json(job);
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    return res.status(400).json({ error: e.message });
   }
 });
 
-/** Displays jobs a worker has accepted */
-router.get('/mine/accepted', auth(true), requireRole('worker'), async (req, res) => {
-  const items = await Job.find({
-    'assignments.workerId': req.user.id,
-    'assignments.status': 'accepted'
-  }).sort({ publishedAt: -1 }).limit(50);
-  res.json(items);
-});
-
-/** Worker releases an accepted job (optional) */
+/* -----------------------------------------------------------
+   Worker releases an accepted job
+----------------------------------------------------------- */
 router.post('/:jobId/release', auth(true), requireRole('worker'), async (req, res) => {
   const { jobId } = req.params;
   const workerId = req.user.id;
@@ -127,7 +166,9 @@ router.post('/:jobId/release', auth(true), requireRole('worker'), async (req, re
   const job = await Job.findById(jobId);
   if (!job) return res.status(404).json({ error: 'Job not found' });
 
-  const a = job.assignments.find(x => x.workerId?.toString() === workerId && x.status === 'accepted');
+  const a = job.assignments.find(
+    x => x.workerId?.toString() === workerId && x.status === 'accepted'
+  );
   if (!a) return res.status(400).json({ error: 'No active assignment to release' });
 
   a.status = 'rejected'; // or 'expired'
@@ -140,15 +181,21 @@ router.post('/:jobId/release', auth(true), requireRole('worker'), async (req, re
     await job.save();
   }
 
-  res.json(job);
+  return res.json(job);
 });
 
-/** Submit review & complete */
+/* -----------------------------------------------------------
+   Submit review & complete
+----------------------------------------------------------- */
 router.post('/:jobId/reviews', auth(true), requireRole('worker'), async (req, res) => {
   try {
     const { jobId } = req.params;
     const workerId = req.user.id;
     const { rating, feedback } = req.body;
+
+    if (rating == null || rating < 0 || rating > 5) {
+      return res.status(400).json({ error: 'rating must be between 0 and 5' });
+    }
 
     const job = await Job.findById(jobId);
     if (!job) return res.status(404).json({ error: 'Job not found' });
@@ -173,7 +220,7 @@ router.post('/:jobId/reviews', auth(true), requireRole('worker'), async (req, re
       workerId,
       rating,
       feedback,
-      isValid: false, // validate later (>= 5 reviews rule, moderation)
+      isValid: false, // to be validated later
     });
 
     // mark assignment completed
@@ -192,13 +239,15 @@ router.post('/:jobId/reviews', auth(true), requireRole('worker'), async (req, re
     if (!stillActive && job.status === 'full') job.status = 'closed';
 
     await job.save();
-    res.status(201).json({ review, job });
+    return res.status(201).json({ review, job });
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    return res.status(400).json({ error: e.message });
   }
 });
 
-/** Payer closes job manually */
+/* -----------------------------------------------------------
+   Payer closes job manually
+----------------------------------------------------------- */
 router.patch('/:jobId/close', auth(true), requireRole('payer'), async (req, res) => {
   const job = await Job.findById(req.params.jobId);
   if (!job) return res.status(404).json({ error: 'Not found' });
@@ -207,7 +256,7 @@ router.patch('/:jobId/close', auth(true), requireRole('payer'), async (req, res)
   }
   job.status = 'closed';
   await job.save();
-  res.json(job);
+  return res.json(job);
 });
 
 export default router;

@@ -33,14 +33,6 @@ app.use(auth(false), async (req, _res, next) => {
   next();
 });
 
-// app.use(async (req, _res, next) => {
-//   if (!req.user?.id) return next();
-//   try {
-//     req.userDoc = await User.findById(req.user.id).select('roles account personal').lean();
-//   } catch {}
-//   next();
-// });
-
 // Routes
 app.use('/api/jobs', jobRoutes);
 app.use('/api/users', userRoutes);
