@@ -35,8 +35,8 @@ app.use(auth(false), async (req, _res, next) => {
 
 // Routes
 app.use('/api/jobs', jobRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes); // /me and /:id
+app.use('/api/auth', authRoutes); // register, login
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
