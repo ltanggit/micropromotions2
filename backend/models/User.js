@@ -11,6 +11,7 @@ const payerProfileSchema = new Schema({
   artistName:  { type: String, trim: true },
   genres:      [{ type: String, trim: true }],
   bio:         { type: String, trim: true },
+  rating:      { type: Number, min: 0, max: 5, default: 0 },
 }, { _id: false });
 
 // Worker/Listener profile (optional)
