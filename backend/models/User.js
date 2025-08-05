@@ -27,10 +27,10 @@ const workerProfileSchema = new Schema({
 const accountSchema = new Schema({
   accountId:      { type: String, index: true }, // if you have an external ID
   username:       { type: String, trim: true, lowercase: true, unique: true, sparse: true },
-  status:         { type: String, enum: ['active','pending','suspended','deleted'], default: 'active', index: true },
+  status:         { type: String, enum: ['active','pending','suspended','deleted'], default: 'active'},
   lastActiveAt:   { type: Date },                          // Last Active/Signed In
   verifiedAt:     { type: Date },                          // Date Verified (null if not)
-  subscription:   { type: String, enum: ['free','premium','pro'], default: 'free', index: true },
+  subscription:   { type: String, enum: ['free','premium','pro'], default: 'free' }, // Subscription type
   isValid:        { type: Boolean, default: false },       // your internal validation flag
   isActive:       { type: Boolean, default: true },        // separate from status for soft-toggle
   region:         { type: String, trim: true },            // e.g. "US"
@@ -85,7 +85,7 @@ const userSchema = new Schema({
   passwordHash: { type: String, required: true },
 
   // Roles (Type: Payer / Worker)
-  roles:  { type: [String], enum: ['payer','worker'], index: true, default: [] },
+  roles:  { type: [String], enum: ['payer','worker'], default: [] },
   payer:  payerProfileSchema,
   worker: workerProfileSchema,
 
