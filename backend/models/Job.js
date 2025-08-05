@@ -43,6 +43,8 @@ const jobSchema = new mongoose.Schema({
 jobSchema.index({ status: 1, publishedAt: -1 });
 jobSchema.index({ tags: 1 });
 jobSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 }); // enable TTL when you set expireAt
+jobSchema.index({ 'assignments.workerId': 1, status: 1, publishedAt: -1 });
+
 
 // Helper method: how many active accepts?
 jobSchema.methods.activeAccepts = function () {
