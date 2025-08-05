@@ -50,20 +50,3 @@ jobSchema.methods.activeAccepts = function () {
 };
 
 export default mongoose.models.Job || mongoose.model('Job', jobSchema);
-
-
-// import mongoose from 'mongoose';
-
-// const jobSchema = new mongoose.Schema({
-//   title: { type: String, required: true },
-//   link: { type: String, required: true },
-//   tags: [String],
-//   maxListeners: { type: Number, required: true },
-//   rating: Number,
-//   type: String, // "payer" or "worker"
-//   status: { type: String, default: 'open' }, // open, closed, expired, etc.
-//   createdAt: { type: Date, default: Date.now }
-// });
-
-// const Job = mongoose.model('Job', jobSchema);
-// export default Job;
