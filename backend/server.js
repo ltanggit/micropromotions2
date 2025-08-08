@@ -21,8 +21,6 @@ app.use(express.urlencoded({ extended: true })); // Parses URL-encoded body (opt
 
 // Optional: attach userDoc if token present (handy for role checks)
 app.use(auth(false), async (req, _res, next) => {
-    console.log(`📥 ${req.method} ${req.originalUrl}`);
-
   try {
     if (req.user?.id) {
       req.userDoc = await User.findById(req.user.id).select('roles account personal').lean();

@@ -6,21 +6,7 @@ import { useAuth } from '@/lib/auth';
 import ReviewForm from '@/components/ReviewForm';
 
 export default function JobDetailPage() {
-  const params = useParams();
-
-  // Check what the route is giving you
-  console.log("🔍 useParams() =", params);
-
-  const id =
-    typeof params.id === "string"
-      ? params.id
-      : Array.isArray(params.id)
-      ? params.id[0]
-      : "";
-
-  console.log("🔍 jobId from params =", id);
-
-//   const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { token, hasRole } = useAuth();
   const [job, setJob] = useState<any>(null);
@@ -55,11 +41,10 @@ export default function JobDetailPage() {
     <div className="mx-auto max-w-3xl p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{job.title}</h1>
-        <span className="text-xs px-2 py-1 rounded border bg-black-100">{job.status}</span>
+        <span className="text-xs px-2 py-1 rounded bg-black-100 border">{job.status}</span>
       </div>
-      {job.link && (
-        <a href={job.link} target="_blank" className="underline text-sm break-all">{job.link}</a>
-      )}
+
+      {job.link && <a href={job.link} target="_blank" className="underline text-sm break-all">{job.link}</a>}
       {job.description && <p className="text-gray-700">{job.description}</p>}
       <div className="flex flex-wrap gap-2">
         {(job.tags || []).map((t:string) => <span key={t} className="text-xs bg-black-100 px-2 py-1 rounded border">{t}</span>)}
@@ -75,7 +60,7 @@ export default function JobDetailPage() {
       )}
 
       {hasRole('worker') && (
-        <ReviewForm jobId={id} onDone={load} />
+        <ReviewForm jobId={typeof id==='string'? id : (Array.isArray(id)? id[0] : '')} onDone={load} />
       )}
 
       {hasRole('payer') && job.payerId && (
@@ -84,7 +69,8 @@ export default function JobDetailPage() {
           onClick={async () => {
             try {
               await api(`/jobs/${id}/close`, { method: 'PATCH', token });
-              router.refresh(); load();
+              await load();
+              router.refresh();
             } catch (e:any) { setErr(e.message); }
           }}
         >
