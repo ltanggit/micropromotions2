@@ -30,8 +30,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Email and password required' });
     }
     
-    console.log('Received email:', email); // <-- add this
-
+    // console.log('Received email:', email); // <-- add this
 
     const exists = await User.findOne({ 'personal.email': email });
     if (exists) return res.status(400).json({ error: 'Email already in use' });

@@ -78,6 +78,30 @@ const apiSchema = new Schema({
   enabled:   { type: Boolean, default: false },
 }, { _id: false });
 
+/* ------- Usage Limits & Counters ------- */
+
+const limitsSchema = new Schema({
+  // payer limits
+  maxOpenJobs:        { type: Number, default: 10 },
+  maxPostsPerDay:     { type: Number, default: 5 },
+  // worker limits
+  maxActiveAccepts:   { type: Number, default: 10 },
+  maxAcceptsPerDay:   { type: Number, default: 6 },
+}, { _id: false });
+
+const countersSchema = new Schema({
+  // payer side
+  openJobs:        { type: Number, default: 0 },  // number of jobs currently open/full
+  postedToday:     { type: Number, default: 0 },
+  postedTotal:     { type: Number, default: 0 },
+  // worker side
+  activeAccepts:   { type: Number, default: 0 },  // currently accepted & not completed
+  acceptedToday:   { type: Number, default: 0 },
+  completedTotal:  { type: Number, default: 0 },
+  // housekeeping
+  lastCountersReset: { type: Date, default: () => new Date() },
+}, { _id: false });
+
 /* ------- Root User ------- */
 
 const userSchema = new Schema({
@@ -97,17 +121,40 @@ const userSchema = new Schema({
   payment:     paymentSchema,
   api:         apiSchema,
 
+  // Limits & counters
+  limits:      { type: limitsSchema,   default: () => ({}) },
+  counters:    { type: countersSchema, default: () => ({}) },
+
   // Legacy/common fields (optional)
   avatarUrl:   { type: String, trim: true },
   tags:        [{ type: String, trim: true }], // for future AI matching
 }, { timestamps: true });
 
-// Indexes
+/* ------- Helpers ------- */
+
+// Lazy daily reset (call this in routes before enforcing limits)
+userSchema.methods.maybeResetDailyCounters = function () {
+  const now = new Date();
+  const last = this.counters?.lastCountersReset ? new Date(this.counters.lastCountersReset) : new Date(0);
+  if (now.toDateString() !== last.toDateString()) {
+    this.counters.postedToday = 0;
+    this.counters.acceptedToday = 0;
+    this.counters.lastCountersReset = now;
+  }
+};
+
+/* ------- Indexes ------- */
+
 userSchema.index({ 'worker.reviewsCount': 1 });
 userSchema.index({ 'account.subscription': 1 });
 userSchema.index({ 'account.status': 1 });
 userSchema.index({ roles: 1 });
 
-// The unique constraints are defined at field level (email, username). Avoid duplicating with schema.index().
+// IMPORTANT: You already have unique indexes at field level for:
+// - personal.email (unique)
+// - account.username (unique, sparse)
+// Do not add a duplicate root-level `email` index.
+
+/* ------- Export ------- */
 
 export default mongoose.models.User || mongoose.model('User', userSchema);
