@@ -102,6 +102,25 @@ const countersSchema = new Schema({
   lastCountersReset: { type: Date, default: () => new Date() },
 }, { _id: false });
 
+/* ------- Connections to Jobs and Reviews ------- */
+
+const jobLinkSchema = new Schema({
+  jobId:     { type: Schema.Types.ObjectId, ref: 'Job', required: true, index: true },
+  role:      { type: String, enum: ['payer','worker'], required: true }, // how they’re connected
+  status:    { type: String, enum: ['open','full','closed','expired','accepted','completed','rejected'], index: true },
+  assignmentId: { type: Schema.Types.ObjectId }, // if you ever make assignments a separate doc
+  addedAt:   { type: Date, default: Date.now },
+  updatedAt: { type: Date },
+}, { _id: false });
+
+const reviewLinkSchema = new Schema({
+  reviewId:  { type: Schema.Types.ObjectId, ref: 'Review', required: true, index: true },
+  jobId:     { type: Schema.Types.ObjectId, ref: 'Job', required: true, index: true },
+  role:      { type: String, enum: ['payer','worker'], required: true }, // payer=receiver, worker=author
+  rating:    { type: Number, min: 0, max: 5 },
+  addedAt:   { type: Date, default: Date.now },
+}, { _id: false });
+
 /* ------- Root User ------- */
 
 const userSchema = new Schema({
@@ -124,6 +143,12 @@ const userSchema = new Schema({
   // Limits & counters
   limits:      { type: limitsSchema,   default: () => ({}) },
   counters:    { type: countersSchema, default: () => ({}) },
+
+  // Connections
+  connections: {
+    jobs:    { type: [jobLinkSchema], default: [] },     // recent jobs they posted or accepted
+    reviews: { type: [reviewLinkSchema], default: [] },  // recent reviews they received or wrote
+  },
 
   // Legacy/common fields (optional)
   avatarUrl:   { type: String, trim: true },
@@ -149,6 +174,10 @@ userSchema.index({ 'worker.reviewsCount': 1 });
 userSchema.index({ 'account.subscription': 1 });
 userSchema.index({ 'account.status': 1 });
 userSchema.index({ roles: 1 });
+// userSchema.index({ 'connections.jobs.jobId': 1 });
+// userSchema.index({ 'connections.jobs.role': 1, 'connections.jobs.status': 1 });
+// userSchema.index({ 'connections.reviews.reviewId': 1 });
+// userSchema.index({ 'connections.reviews.role': 1 });
 
 // IMPORTANT: You already have unique indexes at field level for:
 // - personal.email (unique)

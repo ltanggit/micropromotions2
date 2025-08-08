@@ -9,6 +9,12 @@ import { requireRole } from '../middleware/roles.js';
 
 const router = express.Router();
 
+// Small helper to cap arrays (e.g., keep last 200)
+function pushWithCap(arr, doc, cap = 200) {
+  arr.push(doc);
+  if (arr.length > cap) arr.shift(); // drop oldest
+}
+
 /* -----------------------------------------------------------
    Create job (payer only) — Enforce payer quotas
 ----------------------------------------------------------- */
@@ -54,12 +60,23 @@ router.post('/', auth(true), requireRole('payer'), async (req, res) => {
       isBetaFree, expireAt
     }], { session });
 
-    // increment payer counters
+    // Add to payer's connections
+    payer.connections = payer.connections || {};
+    payer.connections.jobs = payer.connections.jobs || [];
+    pushWithCap(payer.connections.jobs, {
+      jobId: job._id,
+      role: 'payer',
+      status: job.status,  // likely 'open'
+      addedAt: new Date()
+    });
+
+    // Increment payer counters
     payer.counters.openJobs = (payer.counters.openJobs || 0) + 1;
     payer.counters.postedToday = (payer.counters.postedToday || 0) + 1;
     payer.counters.postedTotal = (payer.counters.postedTotal || 0) + 1;
     await payer.save({ session });
 
+    // Commit the transaction
     await session.commitTransaction();
     session.endSession();
     return res.status(201).json(job);
@@ -114,7 +131,7 @@ router.get('/', auth(false), async (req, res) => {
 });
 
 /* -----------------------------------------------------------
-   🟡 Place “mine/*” routes BEFORE “/:jobId” to avoid conflicts
+   Display my jobs (payer/worker) — paginate
 ----------------------------------------------------------- */
 
 /** Worker — jobs I’ve accepted (active only) */
@@ -219,6 +236,22 @@ router.post('/:jobId/accept', auth(true), requireRole('worker'), async (req, res
 
     await job.save({ session });
 
+    // Add to worker's connections
+    worker.connections = worker.connections || {};
+    worker.connections.jobs = worker.connections.jobs || [];
+    const existing = worker.connections.jobs.find(j => j.jobId?.toString() === job._id.toString());
+    if (existing) {
+      existing.status = 'accepted';
+      existing.updatedAt = new Date();
+    } else {
+      pushWithCap(worker.connections.jobs, {
+        jobId: job._id,
+        role: 'worker',
+        status: 'accepted',
+        addedAt: new Date()
+      });
+    }
+
     // increment worker counters
     worker.counters.activeAccepts = (worker.counters.activeAccepts || 0) + 1;
     worker.counters.acceptedToday = (worker.counters.acceptedToday || 0) + 1;
@@ -268,15 +301,18 @@ router.post('/:jobId/release', auth(true), requireRole('worker'), async (req, re
       await job.save({ session });
     }
 
-    // decrement worker active accepts
-    const worker = await User.findById(workerId).session(session);
-    if (worker) {
-      worker.maybeResetDailyCounters?.();
-      if ((worker.counters?.activeAccepts || 0) > 0) {
-        worker.counters.activeAccepts -= 1;
-      }
-      await worker.save({ session });
+    // Remove from worker's connections
+    const wlink = workerId.connections?.jobs?.find(j => j.jobId?.toString() === job._id.toString());
+    if (wlink) {
+      wlink.status = 'rejected'; // or 'expired' if you treat release as expiry
+      wlink.updatedAt = new Date();
     }
+
+    // decrement worker active accepts
+      workerId.maybeResetDailyCounters?.();
+      if ((workerId.counters?.activeAccepts || 0) > 0) {
+        workerId.counters.activeAccepts -= 1;
+      }
 
     await session.commitTransaction();
     session.endSession();
@@ -291,7 +327,7 @@ router.post('/:jobId/release', auth(true), requireRole('worker'), async (req, re
 /* -----------------------------------------------------------
    Submit review & complete — adjust worker counters, job
 ----------------------------------------------------------- */
-router.post('/:jobId/reviews', auth(true), requireRole('worker'), async (req, res) => {
+router.post('/:jobId/review', auth(true), requireRole('worker'), async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -338,9 +374,13 @@ router.post('/:jobId/reviews', auth(true), requireRole('worker'), async (req, re
       isValid: false, // to be validated later
     }], { session });
 
+    // Completion Date Variable
+    const now = new Date();
+
+    // *** JOB UPDATES***
     // mark assignment completed
     a.status = 'completed';
-    a.completedAt = new Date();
+    a.completedAt = now;
     a.reviewId = review._id;
 
     // update aggregates
@@ -355,17 +395,70 @@ router.post('/:jobId/reviews', auth(true), requireRole('worker'), async (req, re
 
     await job.save({ session });
 
-    // adjust worker counters
+    // *** WORKER UPDATES ***
     const worker = await User.findById(workerId).session(session);
     if (worker) {
+      // Add to worker's connections: mark job as completed + add review link
+      worker.connections = worker.connections || {};
+      worker.connections.jobs = worker.connections.jobs || [];
+      worker.connections.reviews = worker.connections.reviews || [];
+      const wlink = worker.connections.jobs.find(j => j.jobId?.toString() === job._id.toString());
+      if (wlink) {
+        wlink.status = 'completed';
+        wlink.updatedAt = now;
+      } else {
+        // just in case it didn't exist
+        pushWithCap(worker.connections.jobs, {
+          jobId: job._id,
+          role: 'worker',
+          status: 'completed',
+          addedAt: now
+        });
+      }
+      pushWithCap(worker.connections.reviews, {
+        reviewId: review._id,
+        jobId: job._id,
+        role: 'worker',    // worker = author
+        rating: review.rating,
+        addedAt: now
+      });
+
+      // adjust worker counters
       worker.maybeResetDailyCounters?.();
       if ((worker.counters?.activeAccepts || 0) > 0) {
         worker.counters.activeAccepts -= 1;
       }
       worker.counters.completedTotal = (worker.counters.completedTotal || 0) + 1;
+
       await worker.save({ session });
     }
 
+    // *** PAYER UPDATES ***
+    const payer = await User.findById(job.payerId).session(session);
+    if (payer) {
+      // Add to payer's connections: add review link (as receiver) and optionally sync job status
+      payer.connections = payer.connections || {};
+      payer.connections.reviews = payer.connections.reviews || [];
+      payer.connections.jobs = payer.connections.jobs || [];
+
+      pushWithCap(payer.connections.reviews, {
+        reviewId: review._id,
+        jobId: job._id,
+        role: 'payer',     // payer = receiver
+        rating: review.rating,
+        addedAt: now
+      });
+
+      const plink = payer.connections.jobs.find(j => j.jobId?.toString() === job._id.toString());
+      if (plink) {
+        plink.status = job.status;      // could be 'full' or 'closed' depending on your logic
+        plink.updatedAt = now;
+      }
+
+      await payer.save({ session });
+    }
+
+    // Commit the transaction
     await session.commitTransaction();
     session.endSession();
     return res.status(201).json({ review, job });
@@ -400,9 +493,28 @@ router.patch('/:jobId/close', auth(true), requireRole('payer'), async (req, res)
     if (wasCounted) {
       const payer = await User.findById(job.payerId).session(session);
       if (payer) {
+        // Update counters
         payer.maybeResetDailyCounters?.();
         if ((payer.counters?.openJobs || 0) > 0) {
           payer.counters.openJobs -= 1;
+        }
+
+        // Update payer's connections
+        payer.connections = payer.connections || {};
+        payer.connections.jobs = payer.connections.jobs || [];
+
+        const plink = payer.connections.jobs.find(j => j.jobId?.toString() === job._id.toString());
+        if (plink) {
+          plink.status = 'closed';
+          plink.updatedAt = new Date();
+        } else {
+          // If it somehow wasn't there
+          pushWithCap(payer.connections.jobs, {
+            jobId: job._id,
+            role: 'payer',
+            status: 'closed',
+            addedAt: new Date()
+          });
         }
         await payer.save({ session });
       }
