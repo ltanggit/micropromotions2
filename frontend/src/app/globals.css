@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -25,9 +24,3 @@ body {
   color: var(--foreground);
   font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif
 }
-
-/* @layer base {
-  button {
-    @apply font-sans text-base rounded-md px-5 py-2 bg-black text-white hover:bg-gray-800 transition duration-300;
-  }
-} */
