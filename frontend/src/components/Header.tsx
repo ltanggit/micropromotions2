@@ -58,7 +58,7 @@ export default function Header() {
           ].map((b) => (
             <Link key={b.href} href={b.href} className="flex items-center h-full">
               {/* Center SVG within its clickable area */}
-              <div className="relative h-[70%] aspect-[187/52] flex items-center justify-center shrink-0 hover:scale-105 transition-transform duration-300">
+              <div className="relative h-[50%] aspect-[187/52] flex items-center justify-center shrink-0 hover:scale-105 transition-transform duration-300">
                 <Image src={b.src} alt={b.alt} fill className="object-contain" />
               </div>
             </Link>

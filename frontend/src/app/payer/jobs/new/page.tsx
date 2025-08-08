@@ -44,8 +44,8 @@ export default function NewJobPage() {
       };
       const job = await api('/jobs', { method: 'POST', token, body });
       setOk('Job created!');
-      // small pause then go to detail
-      setTimeout(() => router.push(`/jobs`), 600);
+      // small pause then go to dashboard
+      setTimeout(() => router.push(`/payer/dashboard`), 600);
     } catch (e:any) {
       setErr(e.message);
     } finally {
