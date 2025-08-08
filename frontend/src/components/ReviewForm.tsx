@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { api } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 
 export default function ReviewForm({ jobId, onDone }: { jobId: string; onDone: () => void }) {
@@ -10,6 +11,8 @@ export default function ReviewForm({ jobId, onDone }: { jobId: string; onDone: (
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string|null>(null);
   const [ok, setOk] = useState<string|null>(null);
+  const router = useRouter();
+  
 
   async function submit() {
     if (!jobId) { setErr('Missing job id'); return; }
@@ -24,6 +27,8 @@ export default function ReviewForm({ jobId, onDone }: { jobId: string; onDone: (
       setFeedback('');
       setRating(5);
       onDone();
+      // small pause then go to dashboard
+      setTimeout(() => router.push(`/worker/dashboard`), 600);
     } catch (e:any) {
       setErr(e.message);
     } finally {
@@ -54,7 +59,7 @@ export default function ReviewForm({ jobId, onDone }: { jobId: string; onDone: (
       />
       {err && <p className="text-red-600 text-sm">{err}</p>}
       {ok && <p className="text-green-600 text-sm">{ok}</p>}
-      <button disabled={loading} onClick={submit} className="px-4 py-2 rounded bg-black text-white">
+      <button disabled={loading} onClick={submit} className="px-4 py-2 rounded bg-black text-white hover:bg-white hover:text-black">
         {loading ? 'Submitting...' : 'Submit'}
       </button>
     </div>

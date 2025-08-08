@@ -54,8 +54,8 @@ export default function JobDetailPage() {
 
       {hasRole('worker') && (
         <div className="flex gap-2">
-          <button disabled={loading} onClick={accept} className="px-4 py-2 rounded bg-black text-white">Accept</button>
-          <button disabled={loading} onClick={release} className="px-4 py-2 rounded border">Release</button>
+          <button disabled={loading} onClick={accept} className="px-4 py-2 rounded border hover:bg-white hover:text-black">Accept</button>
+          <button disabled={loading} onClick={release} className="px-4 py-2 rounded border hover:bg-white hover:text-black">Release</button>
         </div>
       )}
 
@@ -65,12 +65,13 @@ export default function JobDetailPage() {
 
       {hasRole('payer') && job.payerId && (
         <button
-          className="px-4 py-2 rounded border"
+          className="px-4 py-2 rounded border hover:bg-white hover:text-black"
           onClick={async () => {
             try {
               await api(`/jobs/${id}/close`, { method: 'PATCH', token });
               await load();
               router.refresh();
+              setTimeout(() => router.push(`/payer/dashboard`), 600);
             } catch (e:any) { setErr(e.message); }
           }}
         >
