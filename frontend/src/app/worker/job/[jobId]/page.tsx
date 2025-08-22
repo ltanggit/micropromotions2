@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import SpotifyPlayer from '@/components/SpotifyPlayer';
 import { useSpotifyPlayer } from '@/lib/useSpotifyPlayer';
+import SpotifyEmbed from '@/components/SpotifyEmbed';
 
 type Job = {
   _id: string;
@@ -234,6 +235,16 @@ export default function WorkerJobPlayerPage() {
       </div>
 
       {/* Spotify Player */}
+      <div className="border rounded-lg p-4">
+        {!trackId ? (
+            <p className="text-sm text-red-600">
+            This job’s link is not a Spotify track. Please try another job.
+            </p>
+        ) : (
+            <SpotifyEmbed trackId={trackId} height={352} theme="black" />
+        )}
+        </div>
+
       <div className="border rounded-lg p-4">
         {!trackId ? (
           <p className="text-sm text-red-600">
