@@ -121,6 +121,15 @@ const reviewLinkSchema = new Schema({
   addedAt:   { type: Date, default: Date.now },
 }, { _id: false });
 
+/* ------- Spotify Auth Token Schema ------- */
+
+const spotifyAuthSchema = new Schema({
+  spotifyUserId: { type: String, index: true },
+  accessToken:   { type: String },   // store encrypted at rest if possible
+  refreshToken:  { type: String },
+  expiresAt:     { type: Date },     // Date when accessToken expires
+}, { _id: false });
+
 /* ------- Root User ------- */
 
 const userSchema = new Schema({
@@ -149,6 +158,9 @@ const userSchema = new Schema({
     jobs:    { type: [jobLinkSchema], default: [] },     // recent jobs they posted or accepted
     reviews: { type: [reviewLinkSchema], default: [] },  // recent reviews they received or wrote
   },
+
+  // Spotify Integration
+  spotify: spotifyAuthSchema,
 
   // Legacy/common fields (optional)
   avatarUrl:   { type: String, trim: true },
