@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import jobRoutes from './routes/jobRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import spotifyRoutes from './routes/spotifyRoutes.js';
 
 import User from './models/User.js';
 import { auth } from './middleware/auth.js';
@@ -37,6 +38,7 @@ app.use(auth(false), async (req, _res, next) => {
 app.use('/api/jobs', jobRoutes);
 app.use('/api/users', userRoutes); // /me and /:id
 app.use('/api/auth', authRoutes); // register, login
+app.use('/api/spotify', spotifyRoutes); // Spotify auth and token management
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
