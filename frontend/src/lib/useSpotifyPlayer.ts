@@ -1,90 +1,78 @@
-//src/lib/useSpotifyPlayer.ts
+// src/lib/useSpotifyPlayer.ts
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-type SDKState = Spotify.PlaybackState | null; // if you installed @types/spotify-web-playback-sdk, otherwise `any`
-
-type UseSpotifyPlayerArgs = {
-  token?: string | null;      // allow string | null
-  initialVolume?: number;     // 0..1
+export type UseSpotifyPlayerOptions = {
+  /** Seconds of active listening required before submit is allowed. */
+  minSeconds?: number;
 };
 
-export function useSpotifyPlayer({ token, initialVolume = 0.5 }: UseSpotifyPlayerArgs) {
-  const [player, setPlayer] = useState<Spotify.Player | null>(null);
-  const [state, setState]   = useState<SDKState>(null);
-  const [deviceId, setDeviceId] = useState<string | undefined>();
-  const [isReady, setIsReady]   = useState(false);
+export type UseSpotifyPlayerReturn = {
+  /** Elapsed "active listening" seconds. */
+  elapsed: number;
+  /** Is the timer counting right now? */
+  running: boolean;
+  /** Start/resume counting. */
+  start: () => void;
+  /** Pause counting. */
+  pause: () => void;
+  /** Reset the count back to 0. */
+  reset: () => void;
+  /** True once elapsed >= minSeconds. */
+  canSubmit: boolean;
+  /** How many seconds remain to unlock submit. */
+  remaining: number;
+};
 
-  // Load the SDK script once
+/**
+ * Lightweight "listening timer" — decoupled from Spotify SDK to avoid readiness/type issues.
+ * You drive this via UI buttons (Play/Pause). When `elapsed >= minSeconds`, canSubmit becomes true.
+ */
+export function useSpotifyPlayer(
+  opts: UseSpotifyPlayerOptions = {}
+): UseSpotifyPlayerReturn {
+  const min = Math.max(1, opts.minSeconds ?? 30);
+
+  const [elapsed, setElapsed] = useState(0);
+  const [running, setRunning] = useState(false);
+  const intervalRef = useRef<number | null>(null);
+
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (window.Spotify) return; // already loaded
-
-    const script = document.createElement('script');
-    script.src = 'https://sdk.scdn.co/spotify-player.js';
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      // keep the script; removing can trigger re-download on other pages
-    };
-  }, []);
-
-  // Initialize the player once the SDK is ready AND you have a token
-  useEffect(() => {
-    if (!token) return;                // need a Spotify access token (NOT your JWT)
-    if (typeof window === 'undefined') return;
-
-    // The global callback (declared once in src/types/spotify.d.ts)
-    window.onSpotifyWebPlaybackSDKReady = () => {
-      const p = new window.Spotify.Player({
-        name: 'Micropromotions Web Player',
-        getOAuthToken: (cb: (t: string) => void) => cb(token),
-        volume: initialVolume,
-      });
-
-      // When ready, Spotify gives you a device_id
-      p.addListener('ready', ({ device_id }: { device_id: string }) => {
-        setDeviceId(device_id);
-        setIsReady(true);
-      });
-
-      p.addListener('not_ready', () => setIsReady(false));
-      p.addListener('player_state_changed', (s: SDKState) => setState(s));
-
-      p.connect().then(ok => {
-        if (ok) setPlayer(p);
-      });
-    };
-
-    // If the SDK already loaded before this effect
-    if (window.Spotify && !player) {
-      window.onSpotifyWebPlaybackSDKReady?.();
+    if (!running) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
     }
 
-    return () => {
-      // optional: disconnect when unmounting
-      // player?.disconnect();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, initialVolume]);
+    intervalRef.current = window.setInterval(() => {
+      setElapsed((s) => s + 1);
+    }, 1000);
 
-  // Helper to transfer playback to this device using the Web API
-  async function transferToThisDevice() {
-    if (!token || !deviceId) return;
-    await fetch('https://api.spotify.com/v1/me/player', {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ device_ids: [deviceId], play: false }),
-    });
-  }
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [running]);
+
+  const start = () => setRunning(true);
+  const pause = () => setRunning(false);
+  const reset = () => {
+    setRunning(false);
+    setElapsed(0);
+  };
 
   return {
-    player,
-    state,
-    deviceId,
-    isReady,
-    transferToThisDevice,
+    elapsed,
+    running,
+    start,
+    pause,
+    reset,
+    canSubmit: elapsed >= min,
+    remaining: Math.max(0, min - elapsed),
   };
 }
