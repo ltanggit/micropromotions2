@@ -1,74 +1,83 @@
+// src/components/SpotifyPlayer.tsx
 'use client';
 
-import { useEffect, useMemo } from 'react';
-import { useSpotifyPlayer } from '@/lib/useSpotifyPlayer';
+import React from 'react';
 
-type SpotifyPlayerProps = {
-  token?: string;                           // OAuth access token
-  trackId?: string;                         // e.g. "3n3Ppam7vgaVa1iaRUc9Lp"
-  trackUri?: string;                        // e.g. "spotify:track:3n3Ppam7vgaVa1iaRUc9Lp"
-  initialVolume?: number;                   // 0..1
-  className?: string;
-  onProgress?: (currentMs: number, durationMs: number, paused: boolean) => void;
-  onStateChange?: (state: Spotify.PlaybackState | null) => void;
+type Props = {
+  /** Full Spotify track URL or URI. Examples:
+   *  - https://open.spotify.com/track/1hKdDCpiI9mqz1jVHRKG0E
+   *  - spotify:track:1hKdDCpiI9mqz1jVHRKG0E
+   */
+  trackUrl: string;
+  /** Height in pixels (defaults 152 like Spotify's compact embed). */
+  height?: number;
+  /** Called when user hits local "Play (start timer)" button. */
+  onStart?: () => void;
+  /** Called when user hits local "Pause (pause timer)" button. */
+  onPause?: () => void;
+  /** Show local overlay controls (recommended). */
+  showControls?: boolean;
+  /** Whether to allow the embed's native play controls. */
+  allowNativeControls?: boolean;
 };
 
+function toEmbedSrc(input: string): string {
+  // Normalize spotify URI vs URL to an embed URL.
+  const uriMatch = input.match(/spotify:track:([A-Za-z0-9]+)/);
+  const id =
+    uriMatch?.[1] ??
+    input.split('/track/')[1]?.split('?')[0] ??
+    input; // last resort, pass through
+  return `https://open.spotify.com/embed/track/${id}`;
+}
+
 export default function SpotifyPlayer({
-  token,
-  trackId,
-  trackUri,
-  initialVolume = 0.7,
-  className,
-  onProgress,
-  onStateChange,
-}: SpotifyPlayerProps) {
-  // Prefer explicit URI, else build from trackId
-  const uri = useMemo(
-    () => trackUri ?? (trackId ? `spotify:track:${trackId}` : undefined),
-    [trackUri, trackId]
+  trackUrl,
+  height = 152,
+  onStart,
+  onPause,
+  showControls = true,
+  allowNativeControls = true,
+}: Props) {
+  const src = toEmbedSrc(trackUrl);
+
+  return (
+    <div className="w-full">
+      <iframe
+        title="Spotify Player"
+        className="w-full rounded-lg border"
+        style={{ height }}
+        src={src}
+        loading="lazy"
+        frameBorder="0"
+        allow={`${allowNativeControls ? 'autoplay; ' : ''}clipboard-write; encrypted-media; fullscreen; picture-in-picture`}
+      />
+      {showControls && (
+        <div className="mt-3 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onStart}
+            className="px-3 py-1.5 rounded bg-green-600 text-white text-sm hover:bg-green-700"
+          >
+            ▶︎ Start Timer
+          </button>
+          <button
+            type="button"
+            onClick={onPause}
+            className="px-3 py-1.5 rounded bg-gray-200 text-gray-900 text-sm hover:bg-gray-300"
+          >
+            ⏸ Pause Timer
+          </button>
+          <a
+            href={trackUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="ml-auto text-xs underline text-gray-600"
+          >
+            Open in Spotify
+          </a>
+        </div>
+      )}
+    </div>
   );
-
-  // Your hook that loads the Web Playback SDK and returns a ready device/player
-  const { player, state, isReady, deviceId, transferToThisDevice } = useSpotifyPlayer({ token, initialVolume });
-//   const { deviceId, player, state } = useSpotifyPlayer({ token, initialVolume });
-
-  // Optional: bubble raw state out
-  useEffect(() => {
-    if (onStateChange) onStateChange(state ?? null);
-  }, [state, onStateChange]);
-
-  // When device and token are ready, start playing the requested track
-  useEffect(() => {
-    if (!token || !deviceId || !uri) return;
-
-    fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ uris: [uri] }),
-    }).catch(() => {
-      /* no-op; you can toast/log here */
-    });
-  }, [token, deviceId, uri]);
-
-  // Simple progress ticker (1s)
-  useEffect(() => {
-    if (!player || !onProgress) return;
-
-    const id = setInterval(async () => {
-      try {
-        const s = await player.getCurrentState();
-        if (s) onProgress(s.position, s.duration, s.paused);
-      } catch {
-        /* ignore */
-      }
-    }, 1000);
-
-    return () => clearInterval(id);
-  }, [player, onProgress]);
-
-  // This component doesn’t render a UI by itself (you can add controls if you like)
-  return <div className={className} />;
 }
