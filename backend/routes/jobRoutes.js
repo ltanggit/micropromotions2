@@ -147,6 +147,22 @@ router.get('/mine/accepted', auth(true), requireRole('worker'), async (req, res)
   return res.json(items);
 });
 
+/** Worker — jobs I completed/rejected/expired (history) */
+
+router.get('/mine/history', auth(true), requireRole('worker'), async (req, res) => {
+  const workerId = req.user.id;
+  const items = await Job.find({
+    assignments: {
+      $elemMatch: { workerId, status: { $in: ['completed','rejected','expired'] } }
+    }
+  })
+  .sort({ updatedAt: -1 })
+  .limit(200);
+
+  res.json(items);
+});
+
+
 /** Payer — jobs I posted */
 router.get('/mine/posted', auth(true), requireRole('payer'), async (req, res) => {
   const items = await Job.find({ payerId: req.user.id })

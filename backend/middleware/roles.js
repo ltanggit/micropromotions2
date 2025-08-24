@@ -1,3 +1,4 @@
+// backend/middleware/roles.js
 // Simple role guard
 export function requireRole(role) {
   return (req, res, next) => {

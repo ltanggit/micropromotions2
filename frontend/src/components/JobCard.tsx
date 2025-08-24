@@ -1,3 +1,4 @@
+// frontend/src/components/JobCard.tsx
 import Link from 'next/link';
 
 type Job = {

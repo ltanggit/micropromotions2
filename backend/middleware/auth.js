@@ -2,7 +2,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-
 /**
  * auth(required = true)
  * - If required=true: reject requests without a valid token.
@@ -22,7 +21,8 @@ export function auth(required = true) {
       }
 
       const payload = jwt.verify(token, process.env.JWT_SECRET);
-      
+      req.user = { id: payload.sub };
+
       // 🔑 Load the user document
       const userDoc = await User.findById(payload.sub).lean();
       if (!userDoc) {
@@ -31,8 +31,6 @@ export function auth(required = true) {
         req.userDoc = null;
         return next();
       }
-
-      req.user = { id: payload.sub };
       req.userDoc = userDoc;
 
       next();

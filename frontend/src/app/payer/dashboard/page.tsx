@@ -1,3 +1,4 @@
+// frontend/src/app/payer/dashboard/page.tsx
 'use client';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';

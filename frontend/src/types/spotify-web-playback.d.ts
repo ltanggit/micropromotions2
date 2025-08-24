@@ -1,3 +1,4 @@
+// frontend/src/types/spotify-web-playback.d.ts
 // make this a module so it doesn't pollute the global scope incorrectly
 export {};
 
