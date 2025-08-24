@@ -1,3 +1,4 @@
+// frontend/src/app/page.tsx
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center gap-8 p-8 text-center bg-black text-white">
@@ -8,7 +9,7 @@ export default function Home() {
           Amplify Your Music. Get Heard.
         </h1>
         <p className="text-lg max-w-xl mx-auto text-gray-300">
-          SmashHaus connects artists with real listeners to get authentic reviews and feedback — powered by AI and human insight.
+          Authentic reviews. Real feedback. Genuine growth.
         </p>
       </div>
 

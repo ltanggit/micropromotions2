@@ -1,3 +1,4 @@
+// frontend/src/app/jobs/[id]/page.tsx
 'use client';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -41,11 +42,12 @@ export default function JobDetailPage() {
     <div className="mx-auto max-w-3xl p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{job.title}</h1>
-        <span className="text-xs px-2 py-1 rounded bg-black-100 border">{job.status}</span>
+        <span className="text-xs px-2 py-1 rounded bg-black-100 border"> status: {job.status}</span>
       </div>
 
       {job.link && <a href={job.link} target="_blank" className="underline text-sm break-all">{job.link}</a>}
-      {job.description && <p className="text-gray-700">{job.description}</p>}
+            {/* spotifyplayer here */}
+      {job.description && <p className="text-white-700 font-bold">Job Description: {job.description}</p>}
       <div className="flex flex-wrap gap-2">
         {(job.tags || []).map((t:string) => <span key={t} className="text-xs bg-black-100 px-2 py-1 rounded border">{t}</span>)}
       </div>
@@ -54,29 +56,33 @@ export default function JobDetailPage() {
 
       {hasRole('worker') && (
         <div className="flex gap-2">
+          FOR WORKERS:
           <button disabled={loading} onClick={accept} className="px-4 py-2 rounded border hover:bg-white hover:text-black">Accept</button>
           <button disabled={loading} onClick={release} className="px-4 py-2 rounded border hover:bg-white hover:text-black">Release</button>
         </div>
       )}
 
-      {hasRole('worker') && (
+      {/* {hasRole('worker') && (
         <ReviewForm jobId={typeof id==='string'? id : (Array.isArray(id)? id[0] : '')} onDone={load} />
-      )}
+      )} */}
 
       {hasRole('payer') && job.payerId && (
-        <button
-          className="px-4 py-2 rounded border hover:bg-white hover:text-black"
-          onClick={async () => {
-            try {
-              await api(`/jobs/${id}/close`, { method: 'PATCH', token });
-              await load();
-              router.refresh();
-              setTimeout(() => router.push(`/payer/dashboard`), 600);
-            } catch (e:any) { setErr(e.message); }
-          }}
-        >
-          Close Job
-        </button>
+        <div className="flex gap-2">
+          FOR PAYER:
+            <button
+              className="px-4 py-2 rounded border hover:bg-white hover:text-black"
+              onClick={async () => {
+                try {
+                  await api(`/jobs/${id}/close`, { method: 'PATCH', token });
+                  await load();
+                  router.refresh();
+                  setTimeout(() => router.push(`/payer/dashboard`), 600);
+                } catch (e:any) { setErr(e.message); }
+              }}
+            >
+              Close Job
+            </button>
+        </div>
       )}
     </div>
   );

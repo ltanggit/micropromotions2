@@ -1,5 +1,5 @@
+// backend/routes/spotifyRoutes.js
 import express from 'express';
-// import fetch from 'node-fetch';
 import querystring from 'querystring';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
