@@ -17,10 +17,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Spotify Web Playback SDK */}
         <Script src="https://sdk.scdn.co/spotify-player.js" strategy="afterInteractive" />
       </head>
-      <body>
+      <body className="min-h-dvh flex flex-col">
         <AuthProvider>
           <Header />
-          <main className="pt-[80px]">{children}</main>
+          <main className="flex-1 pt-[80px]">{children}</main>
           <Footer />
         </AuthProvider>
       </body>
