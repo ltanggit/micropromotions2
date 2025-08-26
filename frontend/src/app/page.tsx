@@ -2,7 +2,7 @@
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center gap-8 p-8 text-center bg-black text-white">
-      <img src="/assets/SmashHausIconBlack.svg" alt="SmashHaus" className="" />
+      <img src="/assets/Bee.svg" alt="BuzzWork Bee" className="" />
 
       <div>
         <h1 className="text-4xl md:text-6xl font-bold mb-4">

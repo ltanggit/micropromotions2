@@ -34,13 +34,13 @@ export default function Header() {
       <div className="w-full px-4 flex items-center justify-between h-full">
         {/* Logo */}
         <div
-          className={`relative w-48 h-full hover:scale-105 transition-transform duration-1000 ease-in-out ${
+          className={`relative w-80 h-full hover:scale-105 transition-transform duration-1000 ease-in-out ${
             breathe ? 'scale-105' : 'scale-100'
           }`}
         >
           <Link href="/">
             <Image
-              src="/assets/SmashHausWordsOnly.svg"
+              src="/assets/BuzzWorkLargeDark.svg"
               alt="SmashHaus Logo"
               fill
               className="object-contain"
