@@ -54,3 +54,49 @@
 //   });
 //   return res;
 // }
+
+import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
+
+function hmac(data: string, secret: string) {
+  return crypto.createHmac('sha256', secret).update(data).digest('base64url');
+}
+
+export async function GET(req: NextRequest) {
+  const env = process.env;
+  const clientId = env.SPOTIFY_CLIENT_ID!;
+  const redirectUri = env.SPOTIFY_REDIRECT_URI!;
+  const scopes =
+    env.SPOTIFY_SCOPES ??
+    'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state';
+
+  const returnTo = (req.nextUrl.searchParams.get('returnTo') ?? '/spotify/connect').toString();
+
+  // Create signed state (cookie-less)
+  const nonce = crypto.randomBytes(16).toString('base64url');
+  const statePayload = `${nonce}|${encodeURIComponent(returnTo)}`;
+  const sig = hmac(statePayload, env.SPOTIFY_STATE_SECRET!);
+  const state = `${statePayload}|${sig}`;
+
+  // Build authorize URL
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    scope: scopes,
+    state,
+  });
+
+  const authorizeUrl = `https://accounts.spotify.com/authorize?${params.toString()}`;
+
+  // Optionally drop a short-lived cookie to help debug CSRF (not required)
+  const res = NextResponse.redirect(authorizeUrl);
+  res.cookies.set('spotify_csrf_hint', nonce, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: true,
+    path: '/',
+    maxAge: 10 * 60,
+  });
+  return res;
+}

@@ -1,31 +1,31 @@
-'use client';
-import { useMemo } from 'react';
+// 'use client';
+// import { useMemo } from 'react';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE!; // e.g. http://localhost:5000/api
+// const API_BASE = process.env.NEXT_PUBLIC_API_BASE!; // e.g. http://localhost:5000/api
 
-export default function SpotifyConnectPage() {
-  const returnTo = '/spotify/connect';
-  const loginUrl = useMemo(() => {
-    const u = new URL(`${API_BASE}/spotify/login`);
-    u.searchParams.set('returnTo', returnTo);
-    return u.toString();
-  }, []);
+// export default function SpotifyConnectPage() {
+//   const returnTo = '/spotify/connect';
+//   const loginUrl = useMemo(() => {
+//     const u = new URL(`${API_BASE}/spotify/login`);
+//     u.searchParams.set('returnTo', returnTo);
+//     return u.toString();
+//   }, []);
 
-  return (
-    <div className="p-6">
-      <h1 className="text-xl font-semibold mb-2">Connect Spotify</h1>
-      <p className="text-sm opacity-80 mb-4">
-        You’ll be redirected to Spotify to grant permission.
-      </p>
-      <a
-        href={loginUrl}
-        className="inline-block rounded bg-black text-white px-4 py-2"
-      >
-        Connect Spotify
-      </a>
-    </div>
-  );
-}
+//   return (
+//     <div className="p-6">
+//       <h1 className="text-xl font-semibold mb-2">Connect Spotify</h1>
+//       <p className="text-sm opacity-80 mb-4">
+//         You’ll be redirected to Spotify to grant permission.
+//       </p>
+//       <a
+//         href={loginUrl}
+//         className="inline-block rounded bg-black text-white px-4 py-2"
+//       >
+//         Connect Spotify
+//       </a>
+//     </div>
+//   );
+// }
 
 // 'use client';
 
@@ -76,3 +76,58 @@ export default function SpotifyConnectPage() {
 //     </div>
 //   );
 // }
+
+
+'use client';
+
+import { useEffect, useState } from 'react';
+
+export default function SpotifyConnectPage() {
+  const [err, setErr] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+
+  const startLogin = () => {
+    const returnTo = encodeURIComponent('/spotify/connect');
+    window.location.href = `/api/spotify/login?returnTo=${returnTo}`;
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch('/api/spotify/token', { credentials: 'include' });
+        if (!r.ok) {
+          // not authenticated yet
+          return;
+        }
+        const j = await r.json();
+        setToken(j.access_token);
+      } catch (e: any) {
+        setErr(e?.message ?? 'failed to check token');
+      }
+    })();
+  }, []);
+
+  return (
+    <div className="p-6 space-y-4">
+      <h1 className="text-xl font-semibold">Connect Spotify</h1>
+      <p className="text-sm opacity-80">
+        You’ll be redirected to Spotify to grant permission. A Spotify Premium account is required
+        for in-browser playback.
+      </p>
+
+      {err && <div className="text-red-500 text-sm">{err}</div>}
+
+      <button
+        onClick={startLogin}
+        className="rounded px-4 py-2 border hover:bg-black hover:text-white"
+      >
+        Connect Spotify
+      </button>
+
+      <div className="text-sm mt-4">
+        <div>Access token present? {token ? 'Yes' : 'No'}</div>
+        {token && <div className="break-all opacity-60 text-xs mt-2">{token}</div>}
+      </div>
+    </div>
+  );
+}

@@ -118,23 +118,23 @@ async function refreshTokens(refreshToken) {
  * - Stores it in a cookie
  * - Redirects to Spotify authorize
  */
-router.get('/login', (req, res) => {
-  try {
-    const returnTo = (req.query.returnTo || '/').toString();
-    // simple CSRF token
-    const csrf = crypto.randomBytes(16).toString('hex');
-    const stateValue = `${csrf}|${encodeURIComponent(returnTo)}`;
+// router.get('/login', (req, res) => {
+//   try {
+//     const returnTo = (req.query.returnTo || '/').toString();
+//     // simple CSRF token
+//     const csrf = crypto.randomBytes(16).toString('hex');
+//     const stateValue = `${csrf}|${encodeURIComponent(returnTo)}`;
 
-    // Write state cookie at ROOT so callback can read it.
-    res.cookie(STATE_COOKIE, stateValue, cookieOpts(req, { maxAge: 10 * 60 * 1000 }));
+//     // Write state cookie at ROOT so callback can read it.
+//     res.cookie(STATE_COOKIE, stateValue, cookieOpts(req, { maxAge: 10 * 60 * 1000 }));
 
-    const url = buildAuthorizeUrl(csrf);
-    return res.redirect(url);
-  } catch (err) {
-    console.error('[spotify/login] error:', err);
-    return res.status(500).json({ error: 'spotify_login_failed' });
-  }
-});
+//     const url = buildAuthorizeUrl(csrf);
+//     return res.redirect(url);
+//   } catch (err) {
+//     console.error('[spotify/login] error:', err);
+//     return res.status(500).json({ error: 'spotify_login_failed' });
+//   }
+// });
 
 /**
  * GET /api/spotify/callback?code=...&state=csrf|%2FreturnPath
@@ -143,130 +143,130 @@ router.get('/login', (req, res) => {
  * - Stores access & refresh tokens in httpOnly cookies
  * - Redirects back to returnTo
  */
-router.get('/callback', async (req, res) => {
-  try {
-    const stateFromSpotify = (req.query.state || '').toString();
-    const code = (req.query.code || '').toString();
+// router.get('/callback', async (req, res) => {
+//   try {
+//     const stateFromSpotify = (req.query.state || '').toString();
+//     const code = (req.query.code || '').toString();
 
-    // Expect "csrf|returnTo"
-    const [csrfFromQuery, returnToRaw] = stateFromSpotify.split('|');
+//     // Expect "csrf|returnTo"
+//     const [csrfFromQuery, returnToRaw] = stateFromSpotify.split('|');
 
-    // Must have a state cookie written by /login
-    const stateCookie = req.cookies?.[STATE_COOKIE];
-    if (!stateCookie) {
-      console.warn('[spotify/callback] Missing state cookie');
-      return res.status(400).send('Invalid state');
-    }
-    const [csrfFromCookie] = stateCookie.split('|');
+//     // Must have a state cookie written by /login
+//     const stateCookie = req.cookies?.[STATE_COOKIE];
+//     if (!stateCookie) {
+//       console.warn('[spotify/callback] Missing state cookie');
+//       return res.status(400).send('Invalid state');
+//     }
+//     const [csrfFromCookie] = stateCookie.split('|');
 
-    if (!csrfFromQuery || !csrfFromCookie || csrfFromQuery !== csrfFromCookie) {
-      console.warn('[spotify/callback] Invalid state comparison', {
-        csrfFromQuery, csrfFromCookie,
-      });
-      // Clear the stale cookie so subsequent attempts work
-      res.clearCookie(STATE_COOKIE, cookieOpts(req));
-      return res.status(400).send('Invalid state');
-    }
+//     if (!csrfFromQuery || !csrfFromCookie || csrfFromQuery !== csrfFromCookie) {
+//       console.warn('[spotify/callback] Invalid state comparison', {
+//         csrfFromQuery, csrfFromCookie,
+//       });
+//       // Clear the stale cookie so subsequent attempts work
+//       res.clearCookie(STATE_COOKIE, cookieOpts(req));
+//       return res.status(400).send('Invalid state');
+//     }
 
-    if (!code) {
-      res.clearCookie(STATE_COOKIE, cookieOpts(req));
-      return res.status(400).send('Missing code');
-    }
+//     if (!code) {
+//       res.clearCookie(STATE_COOKIE, cookieOpts(req));
+//       return res.status(400).send('Missing code');
+//     }
 
-    // Exchange code for tokens
-    const tokenData = await exchangeCodeForTokens(code);
+//     // Exchange code for tokens
+//     const tokenData = await exchangeCodeForTokens(code);
 
-    // Save tokens in cookies
-    // Access token short-lived; refresh token long-lived
-    res.cookie(ACCESS_COOKIE, tokenData.access_token, cookieOpts(req, { maxAge: tokenData.expires_in * 1000 }));
-    if (tokenData.refresh_token) {
-      res.cookie(REFRESH_COOKIE, tokenData.refresh_token, cookieOpts(req, { maxAge: 30 * 24 * 3600 * 1000 }));
-    }
+//     // Save tokens in cookies
+//     // Access token short-lived; refresh token long-lived
+//     res.cookie(ACCESS_COOKIE, tokenData.access_token, cookieOpts(req, { maxAge: tokenData.expires_in * 1000 }));
+//     if (tokenData.refresh_token) {
+//       res.cookie(REFRESH_COOKIE, tokenData.refresh_token, cookieOpts(req, { maxAge: 30 * 24 * 3600 * 1000 }));
+//     }
 
-    // Clean up state cookie
-    res.clearCookie(STATE_COOKIE, cookieOpts(req));
+//     // Clean up state cookie
+//     res.clearCookie(STATE_COOKIE, cookieOpts(req));
 
-    const returnTo = decodeURIComponent(returnToRaw || '/') || '/';
-    return res.redirect(returnTo);
-  } catch (err) {
-    console.error('[spotify/callback] error:', err?.response?.data || err);
-    // ensure state cookie isn’t left lying around
-    res.clearCookie(STATE_COOKIE, cookieOpts(req));
-    return res.status(500).send('Spotify auth failed');
-  }
-});
+//     const returnTo = decodeURIComponent(returnToRaw || '/') || '/';
+//     return res.redirect(returnTo);
+//   } catch (err) {
+//     console.error('[spotify/callback] error:', err?.response?.data || err);
+//     // ensure state cookie isn’t left lying around
+//     res.clearCookie(STATE_COOKIE, cookieOpts(req));
+//     return res.status(500).send('Spotify auth failed');
+//   }
+// });
 
 /**
  * GET /api/spotify/token
  * - Returns a fresh access token (refreshing if needed).
  * - This is what your frontend should call to obtain a token for the Web Playback SDK.
  */
-router.get('/token', async (req, res) => {
-  try {
-    let access = req.cookies?.[ACCESS_COOKIE] || '';
-    const refresh = req.cookies?.[REFRESH_COOKIE] || '';
+// router.get('/token', async (req, res) => {
+//   try {
+//     let access = req.cookies?.[ACCESS_COOKIE] || '';
+//     const refresh = req.cookies?.[REFRESH_COOKIE] || '';
 
-    // If we have no tokens at all -> 401 so UI can send user to /api/spotify/login
-    if (!access && !refresh) {
-      return res.status(401).json({ error: 'not_authenticated' });
-    }
+//     // If we have no tokens at all -> 401 so UI can send user to /api/spotify/login
+//     if (!access && !refresh) {
+//       return res.status(401).json({ error: 'not_authenticated' });
+//     }
 
-    // If we have an access token, return it directly.
-    if (access) {
-      return res.json({ access_token: access });
-    }
+//     // If we have an access token, return it directly.
+//     if (access) {
+//       return res.json({ access_token: access });
+//     }
 
-    // No access token but we have a refresh token -> refresh it
-    if (refresh) {
-      const data = await refreshTokens(refresh);
-      access = data.access_token;
-      // Update cookie expiry for new access token
-      res.cookie(ACCESS_COOKIE, access, cookieOpts(req, { maxAge: data.expires_in * 1000 }));
-      // Spotify may return a new refresh_token; if so, persist it
-      if (data.refresh_token) {
-        res.cookie(REFRESH_COOKIE, data.refresh_token, cookieOpts(req, { maxAge: 30 * 24 * 3600 * 1000 }));
-      }
-      return res.json({ access_token: access });
-    }
+//     // No access token but we have a refresh token -> refresh it
+//     if (refresh) {
+//       const data = await refreshTokens(refresh);
+//       access = data.access_token;
+//       // Update cookie expiry for new access token
+//       res.cookie(ACCESS_COOKIE, access, cookieOpts(req, { maxAge: data.expires_in * 1000 }));
+//       // Spotify may return a new refresh_token; if so, persist it
+//       if (data.refresh_token) {
+//         res.cookie(REFRESH_COOKIE, data.refresh_token, cookieOpts(req, { maxAge: 30 * 24 * 3600 * 1000 }));
+//       }
+//       return res.json({ access_token: access });
+//     }
 
-    return res.status(401).json({ error: 'not_authenticated' });
-  } catch (err) {
-    console.error('[spotify/token] error:', err?.response?.data || err);
-    return res.status(500).json({ error: 'token_fetch_failed' });
-  }
-});
+//     return res.status(401).json({ error: 'not_authenticated' });
+//   } catch (err) {
+//     console.error('[spotify/token] error:', err?.response?.data || err);
+//     return res.status(500).json({ error: 'token_fetch_failed' });
+//   }
+// });
 
 /**
  * POST /api/spotify/logout
  * - Clears cookies
  */
-router.post('/logout', (req, res) => {
-  try {
-    res.clearCookie(ACCESS_COOKIE, cookieOpts(req));
-    res.clearCookie(REFRESH_COOKIE, cookieOpts(req));
-    res.clearCookie(STATE_COOKIE, cookieOpts(req));
-    return res.json({ ok: true });
-  } catch (err) {
-    console.error('[spotify/logout] error:', err);
-    return res.status(500).json({ error: 'logout_failed' });
-  }
-});
+// router.post('/logout', (req, res) => {
+//   try {
+//     res.clearCookie(ACCESS_COOKIE, cookieOpts(req));
+//     res.clearCookie(REFRESH_COOKIE, cookieOpts(req));
+//     res.clearCookie(STATE_COOKIE, cookieOpts(req));
+//     return res.json({ ok: true });
+//   } catch (err) {
+//     console.error('[spotify/logout] error:', err);
+//     return res.status(500).json({ error: 'logout_failed' });
+//   }
+// });
 
 /**
  * (Optional) GET /api/spotify/me  — for testing that token works
  */
-router.get('/me', async (req, res) => {
-  try {
-    const access = req.cookies?.[ACCESS_COOKIE];
-    if (!access) return res.status(401).json({ error: 'no_access_token' });
-    const { data } = await axios.get('https://api.spotify.com/v1/me', {
-      headers: { Authorization: `Bearer ${access}` },
-    });
-    return res.json(data);
-  } catch (err) {
-    console.error('[spotify/me] error:', err?.response?.data || err);
-    return res.status(500).json({ error: 'me_failed' });
-  }
-});
+// router.get('/me', async (req, res) => {
+//   try {
+//     const access = req.cookies?.[ACCESS_COOKIE];
+//     if (!access) return res.status(401).json({ error: 'no_access_token' });
+//     const { data } = await axios.get('https://api.spotify.com/v1/me', {
+//       headers: { Authorization: `Bearer ${access}` },
+//     });
+//     return res.json(data);
+//   } catch (err) {
+//     console.error('[spotify/me] error:', err?.response?.data || err);
+//     return res.status(500).json({ error: 'me_failed' });
+//   }
+// });
 
 export default router;
