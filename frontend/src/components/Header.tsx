@@ -40,8 +40,8 @@ export default function Header() {
         >
           <Link href="/">
             <Image
-              src="/assets/BuzzWorkLargeDark.svg"
-              alt="SmashHaus Logo"
+              src="/assets/BuzzWorkLargeFont.svg"
+              alt="BuzzWork Logo"
               fill
               className="object-contain"
             />

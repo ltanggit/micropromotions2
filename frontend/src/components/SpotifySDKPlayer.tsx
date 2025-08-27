@@ -49,6 +49,7 @@ export default function SpotifySDKPlayer({
   const accessToken =
     typeof window !== 'undefined' ? localStorage.getItem('spotifyAccessToken') : null;
 
+
   const trackId = useMemo(() => parseTrackId(spotifyTrackRef), [spotifyTrackRef]);
   const trackURI = useMemo(() => (trackId ? `spotify:track:${trackId}` : null), [trackId]);
 
@@ -212,6 +213,14 @@ export default function SpotifySDKPlayer({
       {/* Status / Errors */}
       {sdkError && <div className="text-sm text-red-600">{sdkError}</div>}
       {error && <div className="text-sm text-red-600">{error}</div>}
+
+      if (!accessToken) {
+        <div className="p-3 border rounded bg-yellow-50 text-yellow-800">
+        Missing Spotify user access token.{' '}
+        <a className="underline" href="/spotify/connect">Connect Spotify</a>
+        </div>
+        }
+
 
       <div className="flex items-center gap-4">
         <button
