@@ -1,33 +1,4 @@
 // frontend/src/app/jobs/page.tsx
-// 'use client';
-// import { useEffect, useState } from 'react';
-// import { api } from '@/lib/api';
-// import JobCard from '@/components/JobCard';
-
-// export default function JobsPage() {
-//   const [jobs, setJobs] = useState<any[]>([]);
-//   const [q, setQ] = useState('');
-
-//   async function load() {
-//     const data = await api<{ items: any[] }>('/jobs?status=open' + (q ? `&q=${encodeURIComponent(q)}` : ''));
-//     setJobs(data.items);
-//   }
-
-//   useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
-
-//   return (
-//     <div className="mx-auto max-w-5xl p-4 space-y-4">
-//       <div className="flex gap-2">
-//         <input className="border rounded p-2 flex-1" placeholder="Search jobs" value={q} onChange={e=>setQ(e.target.value)} />
-//         <button className="px-4 py-2 rounded bg-black text-white" onClick={load}>Search</button>
-//       </div>
-//       <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-//         {jobs.map(j => <JobCard key={j._id} job={j} />)}
-//       </div>
-//     </div>
-//   );
-// }
-
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -96,17 +67,17 @@ export default function JobsPage() {
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-6">
       <header className="flex flex-col md:flex-row gap-3 md:items-center justify-between">
-        <h1 className="text-2xl font-semibold">Job board</h1>
+        <h1 className="text-2xl font-semibold">MARKETPLACE</h1>
         <div className="flex gap-2">
           <input
             className="border rounded px-3 py-2"
-            placeholder="Search title/desc/tags…"
+            placeholder="Search Title/Desc/Tags…"
             value={q}
             onChange={e=>setQ(e.target.value)}
           />
           <input
             className="border rounded px-3 py-2"
-            placeholder="Tag (e.g. pop)"
+            placeholder="Tag(s) (e.g. pop)"
             value={tag}
             onChange={e=>setTag(e.target.value)}
           />
@@ -118,7 +89,7 @@ export default function JobsPage() {
 
       <ul className="grid gap-4">
         {items.map(j => (
-          <li key={j._id} className="border rounded p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <li key={j._id} className="border rounded p-6 flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div>
               <h2 className="font-medium">{j.title}</h2>
               <p className="text-sm text-gray-600">{j.description}</p>

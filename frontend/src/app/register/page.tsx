@@ -34,7 +34,7 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto max-w-md p-6">
-      <h1 className="text-2xl font-semibold mb-4">Create account</h1>
+      <h1 className="text-2xl font-semibold mb-4">Create Account</h1>
       <form onSubmit={onSubmit} className="space-y-4">
         <input className="w-full border p-2 rounded" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
         <input className="w-full border p-2 rounded" placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />

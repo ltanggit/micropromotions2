@@ -5,7 +5,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-sm">
         {/* Left: Logo or Name */}
         <div className="flex items-center gap-2">
-          <img src="/assets/BuzzWorkLargeLight.svg" alt="Logo" className="h-10 w-auto" />
+          <img src="/assets/logo/BuzzWorkLargeLight.svg" alt="Logo" className="h-10 w-auto" />
           {/* <span>© {new Date().getFullYear()} SmashHaus. All rights reserved.</span> */}
         </div>
 

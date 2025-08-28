@@ -1,7 +1,4 @@
 // frontend/src/app/worker/job/[jobId]/page.tsx
-
-// =========BEST VERSION===================
-
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
