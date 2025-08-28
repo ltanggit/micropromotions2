@@ -107,7 +107,8 @@ export default function JobCard({ job, role }:{ job:Job, role:'worker'|'payer'|'
         ) : role==='payer' ? (
           <button className="btn-ghost text-xs">Manage</button>
         ) : (
-          <a className="btn-primary text-xs" href="/login">Sign in to apply</a>
+          <a className="btn-primary text-xs" href={`/jobs/${job._id}`}>View Job Description</a>
+          // <a className="btn-primary text-xs" href="/login">Sign in to apply</a>
         )}
       </footer>
     </article>
