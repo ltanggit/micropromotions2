@@ -98,7 +98,7 @@ export default function WorkerDashboard() {
         <h2 className="font-medium mb-3">Current jobs</h2>
         {accepted.length === 0 ? (
           <p className="text-sm text-gray-500">
-            No current jobs. <a className="underline" href="/jobs">Browse the job board</a>.
+            No current jobs. <a className="underline" href="/jobs">Browse the Marketplace</a>.
           </p>
         ) : (
           <ul className="grid gap-3">

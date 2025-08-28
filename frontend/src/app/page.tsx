@@ -1,69 +1,49 @@
 // frontend/src/app/page.tsx
-// export default function Home() {
-//   return (
-//     <main className="min-h-screen flex flex-col items-center justify-center gap-8 p-8 text-center text-white">
-//       <img src="/assets/Bee.svg" alt="BuzzWork Bee" className="" />
+"use client";
+import BackgroundDecor, { BgItem } from "@/components/BackgroundDecor";
+import { useEffect, useState } from "react";
 
-//       <div>
-//         <h1 className="text-4xl md:text-6xl font-bold mb-4">
-//           Amplify Your Music. Get Heard.
-//         </h1>
-//         <p className="text-lg max-w-xl mx-auto text-gray-300 font-[var(--font-sans)]">
-//           Authentic reviews. Real feedback. Genuine growth.
-//         </p>
-//       </div>
-
-//       <div className="flex flex-col sm:flex-row gap-4">
-//         <a href="/payer/dashboard" className="bg-white text-black px-6 py-3 rounded-md font-medium hover:bg-gray-200">
-//           I'm an Artist
-//         </a>
-//         <a href="/worker/dashboard" className="border border-white text-white px-6 py-3 rounded-md font-medium hover:bg-white hover:text-black">
-//           I'm a Listener
-//         </a>
-//       </div>
-//     </main>
-//   );
-// }
-
-import Header from "@/components/Header";
-import BackgroundDecor from "@/components/BackgroundDecor";
 
 export default function Page() {
+  const backgroundItems: BgItem[] = [
+  ];
+
+  const [scrolled, setScrolled] = useState(false);
+    // Scroll detection
+    useEffect(() => {
+      const onScroll = () => setScrolled(window.scrollY > 20);
+      window.addEventListener("scroll", onScroll);
+      return () => window.removeEventListener("scroll", onScroll);
+    }, []);
+  
+
   return (
     <div className="relative min-h-dvh">
-      {/* Background lives behind everything and doesn't change layout */}
-      <BackgroundDecor
-        items={[
-          // Example placements — replace src with your real files in /public/assets/bg
-          {
-            src: "/assets/bg/Ellipses.svg",
-            width: 900,
-            height: 640,
-            className:
-              "-top-24 -left-12 sm:-top-16 sm:left-0 max-w-none animate-float-slow opacity-50",
-            priority: true,
-          },
-          // {
-          //   src: "/assets/bg/rectangles.svg",
-          //   width: 720,
-          //   height: 720,
-          //   className: "-bottom-32 -right-16 sm:-bottom-24 sm:-right-8 max-w-none animate-slow-spin opacity-25",
-          // },
-          {
-            src: "/assets/bg/Rectangles.svg",
-            width: 900,
-            height: 900,
-            className: "top-20 right-1/2 translate-x-1/2 sm:right-8 sm:translate-x-0 max-w-none opacity-10",
-          },
-        ]}
-      />
+      <BackgroundDecor items={backgroundItems} />
 
-      <Header />
+      {/* Flying bee animation
+      <div className="pointer-events-none absolute top-8 left-0 w-full">
+        <img
+          src="/assets/logo/bee.svg"
+          alt="Bee"
+          className="bee-flight w-4 h-4"
+        />
+      </div> */}
 
-      {/* Content gets some top padding so it's not hidden behind the header when at the very top */}
+      {/* Bee buzzing around left side of header */}
+        <div className='pointer-events-none fixed top-6 left-6 w-32 h-32 z-[70] overflow-visible'>
+          <div className="bee-buzz-x w-full h-full relative">
+            <img
+              src="/assets/logo/bee.svg"
+              alt="Bee"
+              className="bee-buzz-y w-30 h-30 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+            />
+          </div>
+        </div>
+
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-28 pb-24">
         <section className="grid gap-6">
-          <h1 className="text-4xl font-extrabold tracking-tight">Launch your campaign</h1>
+          <h1 className="text-4xl font-extrabold tracking-tight">Launch Your Campaign.</h1>
           <p className="max-w-2xl text-white/80">
             Upload your track, recruit listeners, and get structured feedback. Your audience, one job at a time.
           </p>
@@ -72,6 +52,12 @@ export default function Page() {
             <div className="h-40 rounded-2xl bg-white/5 ring-1 ring-white/10" />
             <div className="h-40 rounded-2xl bg-white/5 ring-1 ring-white/10" />
           </div>
+        </section>
+
+        <section className="mt-32 grid gap-6">
+          <h2 className="text-2xl font-bold">More Content Down The Page</h2>
+          <p className="max-w-2xl text-white/70">We can put some more pretty cool stuff and features down here, like a newsletter, sponsors, general information, etc.</p>
+          <div className="h-[120vh] rounded-2xl bg-white/5 ring-1 ring-white/10" />
         </section>
       </main>
     </div>

@@ -5,8 +5,12 @@
   --background: #ffffff;
   --foreground: #171717;
   --font-sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-
 }
+
+.font-sans { font-family: var(--font-sans); }
+
+/* You can also scope custom stacks with utilities */
+.h1 { font: 700 2rem/1.2 var(--font-sans); }
 
 @theme inline {
   --color-background: var(--background);
@@ -28,12 +32,6 @@ body {
   /* font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif */
 }
 
-.font-sans { font-family: var(--font-sans); }
-
-/* You can also scope custom stacks with utilities */
-.h1 { font: 700 2rem/1.2 var(--font-sans); }
-
-
 /* Subtle motion for background items */
 @keyframes float-slow { from { transform: translateY(0px); } 50% { transform: translateY(-12px); } to { transform: translateY(0px); } }
 @keyframes slow-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -44,3 +42,98 @@ body {
 /* Ensure base theme vars exist */
 :root { --brand: #ff2d55; }
 body { background: #0e0f12; color: #fff; }
+
+/* Bee flight animation */
+@keyframes bee-flight {
+  0% { transform: translateX(-100px) translateY(0); }
+  25% { transform: translateX(25vw) translateY(-15px) rotate(-10deg); }
+  50% { transform: translateX(50vw) translateY(10px) rotate(10deg); }
+  75% { transform: translateX(75vw) translateY(-20px) rotate(-5deg); }
+  100% { transform: translateX(110vw) translateY(0); }
+}
+
+.bee-flight {
+  animation: bee-flight 18s linear infinite;
+}
+
+@keyframes bee-x { from { transform: translateX(-12vw); } to { transform: translateX(112vw); } }
+@keyframes bee-y {
+  0%   { transform: translateY(0) rotate(0deg); }
+  25%  { transform: translateY(-12px) rotate(-8deg); }
+  50%  { transform: translateY(6px) rotate(8deg); }
+  75%  { transform: translateY(-10px) rotate(-4deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+.bee-x { animation: bee-x 14s linear infinite alternate; }
+.bee-y { animation: bee-y 2.6s ease-in-out infinite; }
+
+/* Small randomized-looking buzz around anchor using two nested animations */
+@keyframes bee-buzz-x { 0% { transform: translateX(0); } 25% { transform: translateX(14px); } 50% { transform: translateX(-10px); } 75% { transform: translateX(8px); } 100% { transform: translateX(0); } }
+@keyframes bee-buzz-y { 0% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-10px) rotate(-10deg); } 50% { transform: translateY(6px) rotate(8deg); } 75% { transform: translateY(-8px) rotate(-6deg); } 100% { transform: translateY(0) rotate(0deg); } }
+
+.bee-buzz-x { animation: bee-buzz-x 5.4s ease-in-out infinite alternate; }
+.bee-buzz-y { animation: bee-buzz-y 5.8s ease-in-out infinite; }
+
+/* Footer select styling */
+.footer-select { appearance: none; background: transparent; }
+
+/* --- Brand palette (no tailwind.config.js needed) --- */
+:root{
+  --brand-50:  #FFF2DF; /* derived */
+  --brand-100: #FFCA85; /* provided */
+  --brand-200: #FFAF47; /* provided */
+  --brand-300: #F58B00; /* provided */
+  --brand-800: #522E00; /* provided */
+  --brand-950: #140C00; /* provided */
+
+  --bg: #0b0700;
+  --card: #0f0a03;
+  --muted: #22160a;
+  --ring: var(--brand-200);
+  --text: #f8f5ef;
+}
+
+.dark:root{
+  --bg: #0b0700;
+  --card: #0e0903;
+  --muted: #1b1208;
+  --text: #f7efe3;
+}
+
+/* Utility tokens for semantic usage */
+:root{
+  --primary: var(--brand-300);
+  --primary-foreground: #fff9f0;
+  --accent: var(--brand-200);
+  --accent-foreground: #1c1205;
+  --border: color-mix(in oklab, white 8%, black 92%);
+}
+
+/* Scrollbar subtle styling (WebKit) */
+*::-webkit-scrollbar{height:10px;width:10px}
+*::-webkit-scrollbar-thumb{background:color-mix(in oklab,var(--brand-200) 40%, transparent);border-radius:999px}
+
+/* Page background helpers */
+.page-gradient {
+  background-image:
+    radial-gradient(1200px 600px at 10% -10%, color-mix(in oklab, var(--brand-100) 35%, transparent) 0%, transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, color-mix(in oklab, var(--brand-200) 25%, transparent) 0%, transparent 60%);
+}
+
+.card-sheen{
+  background: linear-gradient(180deg, color-mix(in oklab, var(--card) 90%, transparent) 0%, rgba(255,255,255,.02) 100%);
+}
+
+.btn-primary{ @apply inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium shadow-sm transition active:scale-[.98];
+  background: linear-gradient(180deg, color-mix(in oklab,var(--primary) 92%, transparent), color-mix(in oklab,var(--brand-800) 30%, transparent));
+  color: var(--primary-foreground);
+}
+.btn-primary:hover{ filter: brightness(1.05); box-shadow: 0 8px 24px color-mix(in oklab, var(--primary) 30%, transparent); }
+.btn-ghost{ @apply inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-sm; color: color-mix(in oklab, var(--text) 85%, transparent); border: 1px dashed color-mix(in oklab, var(--accent) 35%, transparent); }
+.btn-ghost:hover{ border-style: solid; }
+.input{ @apply w-full rounded-xl px-3 py-2 text-sm outline-none; background: #120b03; color: var(--text); border:1px solid color-mix(in oklab, var(--accent) 30%, transparent)}
+.select{ @apply w-full rounded-xl px-3 py-2 text-sm bg-[#120b03] text-[var(--text)] border; border-color: color-mix(in oklab, var(--accent) 30%, transparent)}
+.badge{ @apply rounded-full px-2 py-1 text-[10px] uppercase tracking-wide; background: color-mix(in oklab, var(--brand-100) 35%, transparent); color:#1c1205 }
+
+/* Focus ring */
+:where(button,input,select,textarea,a):focus-visible{ outline:2px solid var(--ring); outline-offset:2px }
