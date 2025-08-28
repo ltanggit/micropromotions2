@@ -126,7 +126,7 @@ export async function GET(req: NextRequest) {
     if (!code || !state) return NextResponse.json({ error: 'missing_params' }, { status: 400 });
 
     const check = verifyState(state);
-    if (!check.ok) return NextResponse.json({ error: 'invalid_state: ' + state }, { status: 400 });
+    if (!check.ok) return NextResponse.json({ error: 'invalid_state' }, { status: 400 });
 
     const data = await exchangeCodeForTokens(code);
 
