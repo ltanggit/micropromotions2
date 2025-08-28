@@ -1,7 +1,9 @@
 // backend/server.js
+import 'dotenv/config';
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 
 import jobRoutes from './routes/jobRoutes.js';
@@ -17,9 +19,18 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+// app.use(cors());
+// If you're behind Cloudflare/NGINX, this helps cookies/session libs know it's HTTPS:
+app.set('trust proxy', 1); // so req.secure works behind Cloudflare/NGINX if you use it
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000', // http://localhost:3000
+    credentials: true,                // allow cookies
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Parses URL-encoded body (optional)
+app.use(cookieParser());
 
 // Optional: attach userDoc if token present (handy for role checks)
 app.use(auth(false), async (req, _res, next) => {
@@ -39,7 +50,7 @@ app.use(auth(false), async (req, _res, next) => {
 app.use('/api/jobs', jobRoutes);
 app.use('/api/users', userRoutes); // /me and /:id
 app.use('/api/auth', authRoutes); // register, login
-app.use('/api/spotify', spotifyRoutes); // Spotify auth and token management
+// app.use('/api/spotify', spotifyRoutes); // Spotify auth and token management
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)

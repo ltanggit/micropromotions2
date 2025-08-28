@@ -1,14 +1,14 @@
 // frontend/src/app/page.tsx
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-8 p-8 text-center bg-black text-white">
+    <main className="min-h-screen flex flex-col items-center justify-center gap-8 p-8 text-center text-white">
       <img src="/assets/Bee.svg" alt="BuzzWork Bee" className="" />
 
       <div>
         <h1 className="text-4xl md:text-6xl font-bold mb-4">
           Amplify Your Music. Get Heard.
         </h1>
-        <p className="text-lg max-w-xl mx-auto text-gray-300">
+        <p className="text-lg max-w-xl mx-auto text-gray-300 font-[var(--font-sans)]">
           Authentic reviews. Real feedback. Genuine growth.
         </p>
       </div>
