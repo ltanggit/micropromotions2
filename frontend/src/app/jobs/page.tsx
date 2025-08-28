@@ -1,137 +1,19 @@
 // // frontend/src/app/jobs/page.tsx
-// 'use client';
 
-// import { useEffect, useMemo, useState } from 'react';
-// import Link from 'next/link';
-// import { api } from '@/lib/api';
-// import { useAuth } from '@/lib/auth';
-
-// type Job = {
-//   _id: string;
-//   title: string;
-//   description?: string;
-//   tags?: string[];
-//   status: 'open'|'full'|'closed'|'expired';
-//   payoutPerReview?: number;
-//   maxListeners: number;
-//   ratingAvg?: number;
-//   publishedAt?: string;
-// };
-
-// export default function JobsPage() {
-//   const { token, user } = useAuth();
-//   const [items, setItems] = useState<Job[]>([]);
-//   const [q, setQ] = useState('');
-//   const [tag, setTag] = useState('');
-//   const [loading, setLoading] = useState(true);
-//   const [err, setErr] = useState<string|null>(null);
-
-//   const params = useMemo(() => {
-//     const p = new URLSearchParams();
-//     if (q) p.set('q', q);
-//     if (tag) p.set('tag', tag);
-//     p.set('status', 'open');
-//     p.set('limit', '30');
-//     return p.toString();
-//   }, [q, tag]);
-
-//   async function load() {
-//     setLoading(true); setErr(null);
-//     try {
-//       const data = await api<{ items: Job[] }>(`/jobs?${params}`);
-//       setItems(data.items);
-//     } catch (e:any) {
-//       setErr(e.message);
-//     } finally {
-//       setLoading(false);
-//     }
-//   }
-
-//   useEffect(() => { load(); }, [params]);
-
-//   async function accept(jobId: string) {
-//     if (!token) return alert('Please log in first.');
-//     try {
-//       await api(`/jobs/${jobId}/accept`, {
-//         method: 'POST',
-//         body: { dueMinutes: 60 },
-//         token
-//       });
-//       alert('Accepted! Find it in your Worker Dashboard.');
-//       load();
-//     } catch (e:any) {
-//       alert(e.message || 'Failed to accept job');
-//     }
-//   }
-
-//   return (
-//     <div className="max-w-5xl mx-auto p-6 space-y-6">
-//       <header className="flex flex-col md:flex-row gap-3 md:items-center justify-between">
-//         <h1 className="text-2xl font-semibold">MARKETPLACE</h1>
-//         <div className="flex gap-2">
-//           <input
-//             className="border rounded px-3 py-2"
-//             placeholder="Search Title/Desc/Tags…"
-//             value={q}
-//             onChange={e=>setQ(e.target.value)}
-//           />
-//           <input
-//             className="border rounded px-3 py-2"
-//             placeholder="Tag(s) (e.g. pop)"
-//             value={tag}
-//             onChange={e=>setTag(e.target.value)}
-//           />
-//         </div>
-//       </header>
-
-//       {err && <p className="text-red-600">{err}</p>}
-//       {loading && <p>Loading…</p>}
-
-//       <ul className="grid gap-4">
-//         {items.map(j => (
-//           <li key={j._id} className="border rounded p-6 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-gray-50">
-//             <div>
-//               <h2 className="font-medium">{j.title}</h2>
-//               <p className="text-sm text-gray-600">{j.description}</p>
-//               <div className="text-xs text-gray-500 mt-1">
-//                 <span>{j.tags?.join(' • ')}</span>
-//                 {j.payoutPerReview ? <span className="ml-2">• ${j.payoutPerReview.toFixed(2)}/review</span> : null}
-//               </div>
-//             </div>
-//             <div className="flex gap-2">
-//               <Link href={`/jobs/${j._id}`} className="px-3 py-2 border rounded">
-//                 View
-//               </Link>
-//               <button
-//                 onClick={() => accept(j._id)}
-//                 className="px-3 py-2 rounded bg-black text-white disabled:opacity-50"
-//                 disabled={!token || j.status !== 'open'}
-//                 title={!token ? 'Login required' : ''}
-//               >
-//                 Accept
-//               </button>
-//             </div>
-//           </li>
-//         ))}
-//       </ul>
-
-      // <footer className="text-sm text-gray-500">
-      //   {user ? `Logged in as ${user?.email}` : 'Not logged in'}
-      // </footer>
-//     </div>
-//   );
-// }
+// ================================
+// Marketplace page — full-width list with collapsible items spanning page
+// ================================
 
 'use client'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Briefcase, Filter, Plus, Search, X } from 'lucide-react'
-import JobCard, { Job } from '@/components/JobCard'
+import { Briefcase, Filter, Plus, Search, X, ChevronDown, ChevronUp, Clock, DollarSign, Headphones } from 'lucide-react'
+import { Job } from '@/components/JobCard'
 import MarketplaceFilters, { FilterState } from '@/components/MarketplaceFilters'
 import { PostJobModal } from '@/components/PostJobModal'
+import JobItem from '@/components/JobItem'
 
-// Backend base: http://localhost:5000 (no /api)
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || '').replace(/\/$/, '')
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE|| '').replace(/\/$/, '')
 
 function isAbort(err: unknown){
   return err instanceof DOMException && err.name === 'AbortError'
@@ -148,15 +30,17 @@ async function safeJson(res: Response){
   }
 }
 
-// --- Helper: determine role (worker | payer) ---
 async function fetchRole(): Promise<'worker'|'payer'|'guest'> {
-  if(!API_BASE){ return 'guest' }
-  try{
-    const res = await fetch(`${API_BASE}/auth/me`, { credentials: 'include', cache: 'no-store' })
-    if(!res.ok) return 'guest'
-    const data: any = await safeJson(res)
-    return (data?.user?.role === 'payer' ? 'payer' : data?.user?.role === 'worker' ? 'worker' : 'guest')
-  } catch{
+  try {
+    const res = await fetch(`${API_BASE}/users/me`, { credentials: 'include', cache: 'no-store' })
+    if (!res.ok) return 'guest' // 401 → guest
+    const me: any = await safeJson(res)
+    const roles: string[] = me?.roles ?? me?.user?.roles ?? []
+    // Prefer 'worker' for this page if the user has both roles
+    if (roles.includes('worker')) return 'worker'
+    if (roles.includes('payer')) return 'payer'
+    return 'guest'
+  } catch {
     return 'guest'
   }
 }
@@ -169,8 +53,14 @@ export default function MarketplacePage(){
   const [showFilters, setShowFilters] = useState(false)
   const [postOpen, setPostOpen] = useState(false)
   const [error, setError] = useState<string|null>(null)
+  const [expanded, setExpanded] = useState<string|null>(null)
 
   useEffect(()=>{ fetchRole().then(setRole) },[])
+  useEffect(() => {
+    function onFocus() { fetchRole().then(setRole) }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
 
   useEffect(()=>{
     const controller = new AbortController()
@@ -183,14 +73,14 @@ export default function MarketplacePage(){
         setError(null)
         const params = new URLSearchParams()
         if(filters.q) params.set('q', filters.q)
-        if(filters.tags.length) params.set('tag', filters.tags[0]) // backend supports one tag filter
+        if(filters.tags.length) params.set('tag', filters.tags[0])
         if(filters.payoutMin) params.set('payoutMin', String(filters.payoutMin))
         if(filters.onlyOpen) params.set('status', 'open')
         if(filters.sort === 'new') { params.set('sort','publishedAt'); params.set('dir','desc') }
         if(filters.sort === 'payout') { params.set('sort','payoutPerReview'); params.set('dir','desc') }
         if(filters.sort === 'ending') { params.set('sort','expireAt'); params.set('dir','asc') }
 
-        if(!API_BASE){ throw new Error('Missing NEXT_PUBLIC_API_BASE_URL (should be http://localhost:5000)') }
+        if(!API_BASE){ throw new Error('Missing NEXT_PUBLIC_API_BASE_URL') }
         const url = `${API_BASE}/jobs?${params.toString()}`
         const res = await fetch(url, { signal, cache: 'no-store' })
         if(!res.ok){
@@ -198,8 +88,6 @@ export default function MarketplacePage(){
           throw new Error(`HTTP ${res.status}: ${text.slice(0,120)}...`)
         }
         const data: any = await safeJson(res)
-
-        // backend returns { items, total, page, pages }
         let list: any[] = []
         if(Array.isArray(data?.items)) list = data.items
         else if(Array.isArray(data)) list = data
@@ -252,7 +140,7 @@ export default function MarketplacePage(){
 
   return (
     <main className="page-gradient min-h-[100dvh] text-[var(--text)]">
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-24">
+      <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pb-24">
         {/* HERO */}
         <div className="pt-12 sm:pt-16 lg:pt-20 flex flex-col gap-6">
           <div className="flex items-center justify-between gap-4">
@@ -292,27 +180,85 @@ export default function MarketplacePage(){
           </div>
         </div>
 
-        {/* Results */}
+        {/* Results spanning full width */}
         {error && <div className="text-red-400 mt-4">Error loading jobs: {error}</div>}
-        <div id="open-jobs" className="mt-8 grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div id="open-jobs" className="mt-8 flex flex-col gap-4">
           {loading ? Array.from({length:6}).map((_,i)=> (
-            <div key={i} className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/70 animate-pulse h-48"/>
+            <div key={i} className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/70 animate-pulse h-20"/>
           )) : jobs.length === 0 ? (
-            <div className="col-span-full text-center py-20 opacity-80">
+            <div className="text-center py-20 opacity-80">
               <p>No jobs match your filters.</p>
             </div>
-          ) : jobs.map(job => (
-            <JobCard key={job._id} job={job} role={role}/>
-          ))}
+          ) : 
+          
+          // jobs.map(job => {
+          //   const isOpen = expanded===job._id
+          //   const assigned = Array.isArray(job.assignments) ? job.assignments.filter(a=>a.status==='accepted'||a.status==='completed').length : 0
+          //   return (
+          //     <div key={job._id} className="rounded-xl border border-[var(--border)] bg-[var(--card)]/90 card-sheen transition-transform hover:scale-[1.01] hover:shadow-xl">
+          //       <button onClick={()=>setExpanded(isOpen?null:job._id)} className="w-full flex justify-between items-center px-4 py-3 text-left">
+          //         <div>
+          //           <h3 className="font-semibold">{job.title}</h3>
+          //           <p className="text-xs opacity-70">{job.payer?.name ?? 'Unknown'} — {job.status}</p>
+          //         </div>
+          //         {isOpen ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
+          //       </button>
+          //       {isOpen && (
+          //         <div className="px-4 pb-4 text-sm flex flex-col md:flex-row justify-between gap-6">
+          //           {/* Left side job info */}
+          //           <div className="flex-1 space-y-2">
+          //             <p>{job.description}</p>
+          //             {job.tags && <div className="flex flex-wrap gap-1">{job.tags.map(t=>(<span key={t} className="badge">{t}</span>))}</div>}
+          //             <div className="flex gap-4 text-xs opacity-90">
+          //               <span className="flex items-center gap-1"><DollarSign size={12}/> {job.payoutPerReview ?? 0}</span>
+          //               <span className="flex items-center gap-1"><Headphones size={12}/> {assigned}/{job.maxListeners ?? '-'}</span>
+          //               {job.expireAt && <span className="flex items-center gap-1"><Clock size={12}/> {new Date(job.expireAt).toLocaleDateString()}</span>}
+          //             </div>
+          //           </div>
+          //           {/* Right side actions */}
+          //           <div className="flex flex-col items-end justify-between min-w-[200px]">
+          //             {job.link && <a href={job.link} target="_blank" className="btn-ghost text-xs mb-2">View Track</a>}
+          //             {role==='worker' && (
+          //               <button className="btn-primary text-xs" onClick={async()=>{
+          //                 try{
+          //                   const res = await fetch(`${API_BASE}/jobs/${job._id}/accept`, { method:'POST', credentials:'include', headers:{ 'Content-Type':'application/json' } })
+          //                   if(!res.ok) throw new Error(await res.text())
+          //                   alert('Job accepted! Check your dashboard.')
+          //                 }catch(err){ alert('Error: '+err) }
+          //               }}>Accept Job</button>
+          //             )}
+          //             {role==='payer' && (
+          //               <a className="btn-ghost text-xs" href={`/dashboard/jobs/${job._id}`}>Manage</a>
+          //             )}
+          //             {role==='guest' && (
+          //               <a className="btn-primary text-xs" href="/login">Sign in to accept</a>
+          //             )}
+          //           </div>
+          //         </div>
+          //       )}
+          //     </div>
+          //   )
+          // })
+          
+          jobs.map(job => (
+            <JobItem
+              key={job._id}
+              job={job}
+              role={role}
+              apiBase={API_BASE}     // same base you already use for other calls
+              onAccepted={() => { /* optionally refetch */ }}
+            />
+          ))
+          
+          }
         </div>
       </section>
 
-      {/* Drawers / Modals */}
       {showFilters && (
         <MarketplaceFilters initial={filters} onClose={()=>setShowFilters(false)} onApply={(next)=>{ setFilters(next); setShowFilters(false) }}/> )}
 
       {postOpen && role==='payer' && (
-        <PostJobModal onClose={()=>setPostOpen(false)} onSuccess={()=>{ setPostOpen(false); /* optionally refetch */ }} />
+        <PostJobModal onClose={()=>setPostOpen(false)} onSuccess={()=>{ setPostOpen(false) }} />
       )}
     </main>
   )

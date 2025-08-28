@@ -72,7 +72,7 @@ body { background: #0e0f12; color: #fff; }
 @keyframes bee-buzz-y { 0% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-10px) rotate(-10deg); } 50% { transform: translateY(6px) rotate(8deg); } 75% { transform: translateY(-8px) rotate(-6deg); } 100% { transform: translateY(0) rotate(0deg); } }
 
 .bee-buzz-x { animation: bee-buzz-x 5.4s ease-in-out infinite alternate; }
-.bee-buzz-y { animation: bee-buzz-y 5.8s ease-in-out infinite; }
+.bee-buzz-y { animation: bee-buzz-y 7.8s ease-in-out infinite; }
 
 /* Footer select styling */
 .footer-select { appearance: none; background: transparent; }
