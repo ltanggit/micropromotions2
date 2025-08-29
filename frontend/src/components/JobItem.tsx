@@ -18,14 +18,17 @@ export type Job = {
 }
 
 export default function JobItem({
-  job, role, apiBase, onAccepted
+  job, role, apiBase, token, onAccepted
 }: {
   job: Job
   role: 'worker'|'payer'|'guest'
   apiBase: string
+  token?: string | null
   onAccepted?: () => void
 }) {
   const [open, setOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string|null>(null)
   const assigned = Array.isArray(job.assignments)
     ? job.assignments.filter(a => a.status==='accepted' || a.status==='completed').length
     : 0
@@ -33,25 +36,53 @@ export default function JobItem({
     ? Math.min(100, Math.round((assigned / job.maxListeners) * 100))
     : 0
 
+//   async function accept() {
+//     if (role !== 'worker') return
+//     try {
+//       // Try /assign; fallback to /accept
+//       let res = await fetch(`${apiBase}/jobs/${job._id}/assign`, {
+//         method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }
+//       })
+//       if (res.status === 404) {
+//         res = await fetch(`${apiBase}/jobs/${job._id}/accept`, {
+//           method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }
+//         })
+//       }
+//       if (!res.ok) throw new Error(await res.text())
+//       onAccepted?.()
+//       setOpen(false)
+//     } catch (e:any) {
+//       alert('Error: ' + (e?.message ?? e))
+//     }
+//   }
+
   async function accept() {
-    if (role !== 'worker') return
+    if (!token) { window.location.href = '/login'; return } // must be signed in
+    setSubmitting(true); setError(null)
     try {
-      // Try /assign; fallback to /accept
-      let res = await fetch(`${apiBase}/jobs/${job._id}/assign`, {
-        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }
+      const res = await fetch(`${apiBase}/jobs/${job._id}/accept`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,        // <-- important
+        },
+        body: JSON.stringify({ dueMinutes: 60 }),   // backend supports this
       })
-      if (res.status === 404) {
-        res = await fetch(`${apiBase}/jobs/${job._id}/accept`, {
-          method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }
-        })
+      if (res.status === 401 || res.status === 403) {
+        window.location.href = '/login'
+        return
       }
       if (!res.ok) throw new Error(await res.text())
       onAccepted?.()
       setOpen(false)
     } catch (e:any) {
-      alert('Error: ' + (e?.message ?? e))
+      setError(e?.message || 'Failed to accept')
+    } finally {
+      setSubmitting(false)
     }
   }
+
 
   return (
     <div
@@ -131,10 +162,10 @@ export default function JobItem({
               </div>
               <div className="h-px bg-[var(--border)] my-1" />
               <div className="flex gap-2">
-                <a className="btn-ghost flex-1 text-xs" href={`/marketplace/jobs/${job._id}`}>View</a>
+                <a className="btn-ghost flex-1 text-xs" href={`/jobs/${job._id}`}>View</a>
                 {role==='worker'
                   ? <button className="btn-primary flex-1 text-xs" onClick={accept}>Accept</button>
-                  : <a className="btn-primary flex-1 text-xs" href="/login">Sign in</a>
+                  : <a className="btn-primary flex-1 text-xs" href="/login">Accept (Must Login As A Worker)</a>
                 }
               </div>
             </aside>

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useI18n } from '@/components/i18n/LanguageProvider';
+import type { ReactNode } from "react";
 
 export default function Header() {
   const [breathe, setBreathe] = useState(false);
@@ -26,12 +27,14 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const buttons: { href: string; label: string; variant?: "primary" | "outline" | "ghost" }[] = [
+
+  const buttons: { href: string; label: string | ReactNode; variant?: "primary" | "outline" | "ghost" }[] = [
     { href: "/register", label: t('nav.register'), variant: "primary" },
     { href: "/login", label: t('nav.login'), variant: "outline" },
     { href: "/payer/dashboard", label: t('nav.payers'), variant: "ghost" },
     { href: "/worker/dashboard", label: t('nav.workers'), variant: "ghost" },
     { href: "/jobs", label: t('nav.marketplace'), variant: "ghost" },
+    { href: "/profile", label: <Image src="/assets/icons/honeycomb.svg" alt="Profile" width={30} height={30} />, variant: "ghost" },
   ];
 
   const baseBtn =

@@ -46,7 +46,7 @@ export default function RegisterPage() {
           <input type="checkbox" checked={asPayer} onChange={e=>setAsPayer(e.target.checked)} />
           Payer
         </label>
-        {err && <p className="text-red-600 text-sm">{err}</p>}
+        {err && <p className="text-[#FFAF47] text-sm">{err}</p>}
         <button className="px-4 py-2 rounded bg-black text-white">Register</button>
       </form>
     </div>

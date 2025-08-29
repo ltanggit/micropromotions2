@@ -91,7 +91,7 @@ export default function WorkerDashboard() {
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
       <h1 className="text-2xl font-semibold">Worker Dashboard</h1>
-      {err && <p className="text-red-600">{err}</p>}
+      {err && <p className="text-[#FFAF47] text-sm">{err}</p>}
       {loading && <p>Loading…</p>}
 
       <section>
