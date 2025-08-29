@@ -52,7 +52,7 @@ export default function JobDetailPage() {
         {(job.tags || []).map((t:string) => <span key={t} className="text-xs bg-black-100 px-2 py-1 rounded border">{t}</span>)}
       </div>
 
-      {err && <p className="text-red-600 text-sm">{err}</p>}
+      {err && <p className="text-[#FFAF47] text-sm">{err}</p>}
 
       {hasRole('worker') && (
         <div className="flex gap-2">

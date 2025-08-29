@@ -1,3 +1,4 @@
+// backend/utils/stateToken.js
 import crypto from 'crypto';
 
 const ALG = 'sha256';

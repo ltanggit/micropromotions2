@@ -386,10 +386,10 @@ export default function EmbedPlayerWithTimer({
 
   return (
     <div className="w-full flex flex-col gap-3">
-      <div className="relative w-full" style={{ height }}>
+      <div className="relative w-full flex justify-center items-center" style={{ height }}>
         {/* Spotify Embed */}
         <iframe
-          className="rounded-md w-full h-full"
+          className="rounded-md m-2"
           src={`https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0`}
           width="100%"
           height={height}
@@ -401,9 +401,9 @@ export default function EmbedPlayerWithTimer({
         {overlayVisible && !unlocked && (
           <button
             onClick={startTimer}
-            className="absolute inset-0 flex items-center justify-center bg-black/30 text-white font-medium"
+            className="rounded-2xl absolute inset-0 flex items-center justify-center bg-[#FFF2DF]/30 text-white font-bold"
           >
-            ▶️ Click to play & start timer
+            CLICK TO PLAY AND START TIMER
           </button>
         )}
       </div>
@@ -412,7 +412,9 @@ export default function EmbedPlayerWithTimer({
       <div className="flex items-center gap-3">
         <div
           className={`text-sm px-2 py-1 rounded ${
-            unlocked ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+            unlocked
+              ? 'bg-green-100 text-green-700'
+              : 'bg-[#FFCA85] text-[#140C00]'
           }`}
         >
           {unlocked ? 'Listening requirement met' : 'Listening… keep the tab open'}
@@ -426,4 +428,5 @@ export default function EmbedPlayerWithTimer({
       </div>
     </div>
   );
+
 }

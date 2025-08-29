@@ -91,7 +91,7 @@ export default function NewJobPage() {
           </label>
         </div>
 
-        {err && <p className="text-red-600 text-sm">{err}</p>}
+        {err && <p className="text-[#FFAF47] text-sm">{err}</p>}
         {ok && <p className="text-green-600 text-sm">{ok}</p>}
 
         <button disabled={loading} className="px-4 py-2 rounded bg-black text-white">

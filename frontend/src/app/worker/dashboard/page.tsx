@@ -91,14 +91,14 @@ export default function WorkerDashboard() {
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
       <h1 className="text-2xl font-semibold">Worker Dashboard</h1>
-      {err && <p className="text-red-600">{err}</p>}
+      {err && <p className="text-[#FFAF47] text-sm">{err}</p>}
       {loading && <p>Loading…</p>}
 
       <section>
         <h2 className="font-medium mb-3">Current jobs</h2>
         {accepted.length === 0 ? (
           <p className="text-sm text-gray-500">
-            No current jobs. <a className="underline" href="/jobs">Browse the job board</a>.
+            No current jobs. <a className="underline" href="/jobs">Browse the Marketplace</a>.
           </p>
         ) : (
           <ul className="grid gap-3">

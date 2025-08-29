@@ -70,6 +70,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 type Props = {
   jobId: string;
@@ -89,6 +90,7 @@ export default function ReviewForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
+  const router = useRouter();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +118,7 @@ export default function ReviewForm({
 
       setOk(true);
       onSubmitted?.();
+      router.push('/jobs');
     } catch (err: any) {
       setError(err.message || 'Failed to submit review');
     } finally {
@@ -158,7 +161,7 @@ export default function ReviewForm({
         </div>
       )}
 
-      {error && <div className="text-sm text-red-600">{error}</div>}
+      {error && <div className="text-sm text-[#FFAF47]">{error}</div>}
       {ok && (
         <div className="text-sm text-green-700 bg-green-50 rounded px-2 py-1">
           Thank you! Your review was submitted.
@@ -169,8 +172,8 @@ export default function ReviewForm({
         <button
           type="submit"
           disabled={!canSubmit || busy}
-          className={`px-4 py-2 rounded text-white ${
-            !canSubmit || busy ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+          className={`px-4 py-2 rounded text-[#140C00] ${
+            !canSubmit || busy ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#FFAF47] hover:bg-[#F58B00]'
           }`}
         >
           {busy ? 'Submitting…' : 'Submit Review'}

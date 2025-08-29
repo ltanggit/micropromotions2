@@ -1,7 +1,4 @@
 // frontend/src/app/worker/job/[jobId]/page.tsx
-
-// =========BEST VERSION===================
-
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -57,7 +54,7 @@ export default function WorkerJobPage({ params }: { params: { jobId: string } })
   }
   if (error || !job) {
     return (
-      <div className="p-6 text-red-700">
+      <div className="p-6 text-[#FFAF47]">
         {error || 'Job not found.'}
       </div>
     );
@@ -72,14 +69,14 @@ export default function WorkerJobPage({ params }: { params: { jobId: string } })
           {job.tags?.length ? (
             <div className="mt-2 flex flex-wrap gap-2">
               {job.tags.map((t) => (
-                <span key={t} className="text-xs bg-gray-100 px-2 py-0.5 rounded">
+                <span key={t} className="text-xs bg-[#F58B00] px-2 py-0.5 rounded">
                   #{t}
                 </span>
               ))}
             </div>
           ) : null}
           {job.description ? (
-            <p className="mt-3 text-sm text-gray-700">{job.description}</p>
+            <p className="mt-3 text-sm text-[#FFAF47]">Description: {job.description}</p>
           ) : null}
         </div>
 
