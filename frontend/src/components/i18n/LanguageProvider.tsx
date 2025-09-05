@@ -9,6 +9,7 @@ type Dict = Record<string, Record<Lang, string>>;
 const DICT: Dict = {
   'nav.register': { en: 'Register', es: 'Registrarse', fr: 'S’inscrire' },
   'nav.login': { en: 'Login', es: 'Iniciar sesión', fr: 'Se connecter' },
+  'nav.dashboard': { en: 'Dashboard', es: 'Tablero', fr: 'Tableau de bord' },
   'nav.payers': { en: 'Payers', es: 'Pagadores', fr: 'Annonceurs' },
   'nav.workers': { en: 'Workers', es: 'Trabajadores', fr: 'Écouteurs' },
   'nav.marketplace': { en: 'Marketplace', es: 'Mercado', fr: 'Marché' },
