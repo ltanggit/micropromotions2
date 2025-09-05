@@ -35,6 +35,7 @@ export default function Header() {
     { href: "/worker/dashboard", label: t('nav.workers'), variant: "ghost" },
     { href: "/jobs", label: t('nav.marketplace'), variant: "ghost" },
     { href: "/profile", label: t('nav.profile'), variant: "ghost" },
+    // honeycomb icon for profile
     // { href: "/profile", label: <Image src="/assets/icons/honeycomb.svg" alt="Profile" width={30} height={30} />, variant: "ghost" },
   ];
 
