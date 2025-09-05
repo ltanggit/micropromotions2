@@ -12,6 +12,7 @@ const DICT: Dict = {
   'nav.payers': { en: 'Payers', es: 'Pagadores', fr: 'Annonceurs' },
   'nav.workers': { en: 'Workers', es: 'Trabajadores', fr: 'Écouteurs' },
   'nav.marketplace': { en: 'Marketplace', es: 'Mercado', fr: 'Marché' },
+  'nav.profile': { en: 'Profile', es: 'Perfil', fr: 'Profil' },
   'footer.language': { en: 'Language', es: 'Idioma', fr: 'Langue' },
 };
 

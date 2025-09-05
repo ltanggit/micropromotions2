@@ -16,11 +16,6 @@ export default function Footer() {
 
         {/* Right: Links + Language */}
         <div className="flex items-center gap-6">
-          <img src="/assets/Socials.svg" alt="Socials" className="h-8 w-auto" />
-          <a href="/privacy" className="hover:underline">Privacy</a>
-          <a href="/terms" className="hover:underline">Terms</a>
-          <a href="mailto:contact@buzzwork.com" className="hover:underline">Contact</a>
-
           {/* Language selector */}
           <label className="ml-2 flex items-center gap-2">
             <span className="opacity-80 hidden sm:inline">{t('footer.language')}</span>
@@ -40,6 +35,11 @@ export default function Footer() {
               <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/70">▾</span>
             </div>
           </label>
+
+          <a href="/privacy" className="hover:underline">Privacy</a>
+          <a href="/terms" className="hover:underline">Terms</a>
+          <a href="mailto:contact@buzzwork.com" className="hover:underline">Contact</a>
+          <img src="/assets/Socials.svg" alt="Socials" className="h-8 w-auto" />
         </div>
       </div>
     </footer>
