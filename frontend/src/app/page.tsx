@@ -21,17 +21,17 @@ export default function Page() {
     <div className="relative min-h-dvh">
       <BackgroundDecor items={backgroundItems} />
 
-      {/* Flying bee animation
-      <div className="pointer-events-none absolute top-8 left-0 w-full">
+      {/* Flying bee animation */}
+      <div className="pointer-events-none absolute top-8 left-0 w-full z-70">
         <img
           src="/assets/logo/bee.svg"
           alt="Bee"
           className="bee-flight w-4 h-4"
         />
-      </div> */}
+      </div>
 
       {/* Bee buzzing around left side of header */}
-        <div className='pointer-events-none fixed top-6 left-6 w-32 h-32 z-[70] overflow-visible'>
+        {/* <div className='pointer-events-none fixed top-6 left-6 w-32 h-32 z-[70] overflow-visible'>
           <div className="bee-buzz-x w-full h-full relative">
             <img
               src="/assets/logo/bee.svg"
@@ -39,7 +39,7 @@ export default function Page() {
               className="bee-buzz-y w-30 h-30 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
             />
           </div>
-        </div>
+        </div> */}
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-28 pb-24">
         <section className="grid gap-6">
