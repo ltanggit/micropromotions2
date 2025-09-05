@@ -151,7 +151,7 @@ export default function MarketplacePage(){
   },[role])
 
   return (
-    <main className="page-gradient min-h-[100dvh] text-[var(--text)]">
+    <main className="min-h-[100dvh] text-[var(--text)]">
       <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pb-24">
         {/* HERO */}
         <div className="pt-12 sm:pt-16 lg:pt-20 flex flex-col gap-6">
